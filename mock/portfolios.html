@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolios — Investment Tracker</title>
+  <link rel="stylesheet" href="css/identity.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">IT</div>
+        <div>
+          <div class="brand-text">Investment Tracker</div>
+          <div class="brand-sub">Local · CAD</div>
+        </div>
+      </div>
+      <nav>
+        <div class="nav-section">Overview</div>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="holdings.html" class="nav-link">Holdings</a>
+        <a href="portfolios.html" class="nav-link active">Portfolios</a>
+        <div class="nav-section">Records</div>
+        <a href="transactions.html" class="nav-link">Record trade</a>
+        <a href="smith-maneuver.html" class="nav-link">Smith Maneuver</a>
+        <a href="tax-summary.html" class="nav-link">Tax summary</a>
+        <div class="nav-section">Mock</div>
+        <a href="index.html" class="nav-link">All screens</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Portfolios</h1>
+          <p class="page-subtitle">Switch active context for dashboard &amp; reports</p>
+        </div>
+        <button class="btn btn-primary">New portfolio</button>
+      </header>
+
+      <div class="grid-2">
+        <div class="card" style="border: 2px solid var(--sage); position: relative;">
+          <span class="tag tag-sage" style="position: absolute; top: 1rem; right: 1rem;">Active</span>
+          <span class="tag tag-lavender" style="margin-bottom: 0.75rem;">Smith Maneuver</span>
+          <h2 style="font-size: 1.125rem; margin: 0 0 0.25rem; letter-spacing: -0.02em;">Margin — Questrade</h2>
+          <p style="margin: 0 0 1rem; font-size: 0.875rem; color: var(--text-muted);">HELOC-funded taxable investing</p>
+          <div style="display: flex; gap: 2rem;">
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Value</div>
+              <div class="mono" style="font-size: 1.25rem; font-weight: 600;">$142,380</div>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Return</div>
+              <div class="mono positive" style="font-size: 1.25rem; font-weight: 600;">+14.7%</div>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Holdings</div>
+              <div style="font-size: 1.25rem; font-weight: 600;">4</div>
+            </div>
+          </div>
+          <a href="dashboard.html" class="btn btn-ghost" style="margin-top: 1.25rem; text-decoration: none;">Open dashboard →</a>
+        </div>
+
+        <div class="card">
+          <span class="tag tag-sky" style="margin-bottom: 0.75rem;">TFSA</span>
+          <h2 style="font-size: 1.125rem; margin: 0 0 0.25rem; letter-spacing: -0.02em;">Wealthsimple TFSA</h2>
+          <p style="margin: 0 0 1rem; font-size: 0.875rem; color: var(--text-muted);">Registered growth account</p>
+          <div style="display: flex; gap: 2rem;">
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Value</div>
+              <div class="mono" style="font-size: 1.25rem; font-weight: 600;">$68,240</div>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Return</div>
+              <div class="mono positive" style="font-size: 1.25rem; font-weight: 600;">+22.1%</div>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Holdings</div>
+              <div style="font-size: 1.25rem; font-weight: 600;">6</div>
+            </div>
+          </div>
+          <button class="btn btn-ghost" style="margin-top: 1.25rem;">Switch to this</button>
+        </div>
+
+        <div class="card">
+          <span class="tag tag-peach" style="margin-bottom: 0.75rem;">Taxable</span>
+          <h2 style="font-size: 1.125rem; margin: 0 0 0.25rem; letter-spacing: -0.02em;">TD Direct Investing</h2>
+          <p style="margin: 0 0 1rem; font-size: 0.875rem; color: var(--text-muted);">Non-registered cash account</p>
+          <div style="display: flex; gap: 2rem;">
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Value</div>
+              <div class="mono" style="font-size: 1.25rem; font-weight: 600;">$24,100</div>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Return</div>
+              <div class="mono positive" style="font-size: 1.25rem; font-weight: 600;">+8.4%</div>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Holdings</div>
+              <div style="font-size: 1.25rem; font-weight: 600;">2</div>
+            </div>
+          </div>
+          <button class="btn btn-ghost" style="margin-top: 1.25rem;">Switch to this</button>
+        </div>
+
+        <div class="card">
+          <span class="tag tag-butter" style="margin-bottom: 0.75rem;">RRSP</span>
+          <h2 style="font-size: 1.125rem; margin: 0 0 0.25rem; letter-spacing: -0.02em;">Employer RRSP</h2>
+          <p style="margin: 0 0 1rem; font-size: 0.875rem; color: var(--text-muted);">Group retirement plan</p>
+          <div style="display: flex; gap: 2rem;">
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Value</div>
+              <div class="mono" style="font-size: 1.25rem; font-weight: 600;">$112,500</div>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Return</div>
+              <div class="mono positive" style="font-size: 1.25rem; font-weight: 600;">+11.2%</div>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Holdings</div>
+              <div style="font-size: 1.25rem; font-weight: 600;">3</div>
+            </div>
+          </div>
+          <button class="btn btn-ghost" style="margin-top: 1.25rem;">Switch to this</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

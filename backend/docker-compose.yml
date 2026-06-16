@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: investment-tracker-postgres
+    environment:
+      POSTGRES_DB: investment_tracker
+      POSTGRES_USER: investment_tracker
+      POSTGRES_PASSWORD: investment_tracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U investment_tracker -d investment_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Opt-in: `docker compose --profile full up --build`
+  # Default `docker compose up` runs Postgres only.
+  app:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: investment-tracker-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: investment_tracker
+      POSTGRES_USER: investment_tracker
+      POSTGRES_PASSWORD: investment_tracker
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:

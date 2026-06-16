@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smith Maneuver — Investment Tracker</title>
+  <link rel="stylesheet" href="css/identity.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">IT</div>
+        <div>
+          <div class="brand-text">Investment Tracker</div>
+          <div class="brand-sub">Local · CAD</div>
+        </div>
+      </div>
+      <nav>
+        <div class="nav-section">Overview</div>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="holdings.html" class="nav-link">Holdings</a>
+        <a href="portfolios.html" class="nav-link">Portfolios</a>
+        <div class="nav-section">Records</div>
+        <a href="transactions.html" class="nav-link">Record trade</a>
+        <a href="smith-maneuver.html" class="nav-link active">Smith Maneuver</a>
+        <a href="tax-summary.html" class="nav-link">Tax summary</a>
+        <div class="nav-section">Mock</div>
+        <a href="index.html" class="nav-link">All screens</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Smith Maneuver</h1>
+          <p class="page-subtitle">Borrow-to-invest tracing · HELOC deductible interest</p>
+        </div>
+        <button class="btn btn-primary">New flow</button>
+      </header>
+
+      <div class="banner banner-info">
+        <span>ℹ</span>
+        <span>Record-keeping aid only — not tax advice. Confirm figures against CRA rules.</span>
+      </div>
+
+      <div class="grid-2" style="margin-bottom: 1.25rem;">
+        <div class="card">
+          <p class="card-title">Investment-use balance</p>
+          <p class="card-value">$98,420</p>
+          <p class="card-meta">Traced HELOC principal for investment</p>
+        </div>
+        <div class="card">
+          <p class="card-title">May 2026 interest · deductible est.</p>
+          <p class="card-value card-value-sm">$412 <span style="font-size: 0.875rem; color: var(--text-muted);">of $518 total</span></p>
+          <p class="card-meta">79.5% attributable to traced investment use</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <p class="card-title" style="margin: 0;">Flow #2024-03 — TSE:XEI purchase</p>
+          <span class="tag tag-sage">Traced</span>
+        </div>
+        <div class="flow-chain">
+          <div class="flow-step active">
+            <span class="flow-label">HELOC Draw</span>
+            <span class="flow-amount">$15,600</span>
+            <span class="tag tag-sage" style="margin-top: 0.375rem; font-size: 0.625rem;">Investment</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="flow-label">Transfer</span>
+            <span class="flow-amount">$15,600</span>
+            <span style="font-size: 0.6875rem; color: var(--text-muted); margin-top: 0.25rem;">HELOC → Chequing</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="flow-label">Transfer</span>
+            <span class="flow-amount">$15,600</span>
+            <span style="font-size: 0.6875rem; color: var(--text-muted); margin-top: 0.25rem;">Chequing → Margin</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step active">
+            <span class="flow-label">Buy</span>
+            <span class="flow-amount">TSE:XEI</span>
+            <span style="font-size: 0.6875rem; color: var(--text-muted); margin-top: 0.25rem;">500 @ $31.20</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="banner banner-warn" style="margin-bottom: 1.25rem;">
+        <span>⚠</span>
+        <div>
+          <strong>Partially traced draw — Apr 2025</strong><br>
+          $4,200 HELOC draw tagged <em>Personal</em>. Does not count toward deductible base. Review purpose tags.
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card-title">HELOC accounts</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Balance</th>
+                <th>Limit</th>
+                <th>Rate</th>
+                <th>Traced %</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>TD HELOC</td>
+                <td class="mono">$102,800</td>
+                <td class="mono">$150,000</td>
+                <td class="mono">6.45%</td>
+                <td class="mono">95.7%</td>
+                <td><span class="tag tag-sage">Mostly traced</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1.25rem;">
+        <p class="card-title">Interest log · 2026</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Deductible est.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">2026-01-31</td>
+                <td>Interest Charge</td>
+                <td class="mono">$542</td>
+                <td class="mono positive">$428</td>
+              </tr>
+              <tr>
+                <td class="mono">2026-02-28</td>
+                <td>Interest Charge</td>
+                <td class="mono">$528</td>
+                <td class="mono positive">$418</td>
+              </tr>
+              <tr>
+                <td class="mono">2026-05-31</td>
+                <td>Interest Charge</td>
+                <td class="mono">$518</td>
+                <td class="mono positive">$412</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

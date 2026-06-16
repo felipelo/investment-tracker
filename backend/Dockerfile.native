@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1
+
+# Native image: GraalVM ahead-of-time compilation to a standalone binary.
+# Slow to build and memory-hungry, but tiny runtime image and fast startup.
+
+# --- Native build stage ---
+FROM ghcr.io/graalvm/graalvm-community:25 AS build
+WORKDIR /workspace
+
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN ./mvnw -B dependency:go-offline
+
+COPY src/ src/
+# The `native` profile is provided by spring-boot-starter-parent.
+RUN ./mvnw -B -Pnative native:compile -DskipTests
+
+# --- Runtime stage ---
+# distroless/base provides glibc + libssl for the dynamically linked binary.
+FROM gcr.io/distroless/base-debian12 AS runtime
+WORKDIR /app
+COPY --from=build /workspace/target/investment-tracker app
+EXPOSE 8080
+ENTRYPOINT ["/app/app"]

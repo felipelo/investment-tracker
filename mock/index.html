@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investment Tracker — Visual Mock</title>
+  <link rel="stylesheet" href="css/identity.css">
+</head>
+<body>
+  <div class="main" style="max-width: 960px; margin: 0 auto; padding-top: 3rem;">
+    <header style="margin-bottom: 2rem;">
+      <div class="brand-mark" style="margin-bottom: 1rem;">IT</div>
+      <h1 class="page-title">Investment Tracker</h1>
+      <p class="page-subtitle">Visual mock — pastel, modern, minimal. Based on REQUIREMENTS.md v0.1.</p>
+    </header>
+
+    <section>
+      <h2 style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 0.75rem;">Pastel palette</h2>
+      <div class="palette-strip">
+        <div class="swatch" style="background: var(--sage);"><span class="swatch-label">Sage</span></div>
+        <div class="swatch" style="background: var(--lavender);"><span class="swatch-label">Lavender</span></div>
+        <div class="swatch" style="background: var(--peach);"><span class="swatch-label">Peach</span></div>
+        <div class="swatch" style="background: var(--sky);"><span class="swatch-label">Sky</span></div>
+        <div class="swatch" style="background: var(--butter);"><span class="swatch-label">Butter</span></div>
+        <div class="swatch" style="background: var(--blush);"><span class="swatch-label">Blush</span></div>
+        <div class="swatch" style="background: var(--bg);"><span class="swatch-label">Canvas</span></div>
+      </div>
+    </section>
+
+    <section class="hub-grid">
+      <a href="dashboard.html" class="card hub-card">
+        <div class="hub-accent" style="background: linear-gradient(90deg, var(--sage), var(--lavender));"></div>
+        <h2>Dashboard</h2>
+        <p>Allocation, returns, dividends chart, period cards — §5 reference design.</p>
+      </a>
+      <a href="holdings.html" class="card hub-card">
+        <div class="hub-accent" style="background: var(--peach);"></div>
+        <h2>Holdings</h2>
+        <p>Positions, ACB/share, market value, drill-down to transaction history.</p>
+      </a>
+      <a href="transactions.html" class="card hub-card">
+        <div class="hub-accent" style="background: var(--sky);"></div>
+        <h2>Record trade</h2>
+        <p>Buy, Sell, ROC, Reinvested Distribution, Split — acb-tracker actions.</p>
+      </a>
+      <a href="smith-maneuver.html" class="card hub-card">
+        <div class="hub-accent" style="background: var(--lavender);"></div>
+        <h2>Smith Maneuver</h2>
+        <p>HELOC draw → invest flow chain, deductible interest estimate.</p>
+      </a>
+      <a href="tax-summary.html" class="card hub-card">
+        <div class="hub-accent" style="background: var(--butter);"></div>
+        <h2>Tax summary</h2>
+        <p>Realized gains, dividends, deductible interest — export ready.</p>
+      </a>
+      <a href="portfolios.html" class="card hub-card">
+        <div class="hub-accent" style="background: var(--blush);"></div>
+        <h2>Portfolios</h2>
+        <p>Multi-portfolio list, type tags, switch active context.</p>
+      </a>
+    </section>
+
+    <p style="margin-top: 2.5rem; font-size: 0.8125rem; color: var(--text-faint);">
+      Static HTML mock only — no backend, sample CAD data for Smith Maneuver portfolio.<br>
+      Visual spec: <a href="../DESIGN.md" style="color: var(--sage-deep);">DESIGN.md</a> · CSS: <code style="font-size: 0.75rem;">css/identity.css</code>
+    </p>
+  </div>
+</body>
+</html>

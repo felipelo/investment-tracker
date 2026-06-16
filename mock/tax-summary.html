@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tax summary — Investment Tracker</title>
+  <link rel="stylesheet" href="css/identity.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">IT</div>
+        <div>
+          <div class="brand-text">Investment Tracker</div>
+          <div class="brand-sub">Local · CAD</div>
+        </div>
+      </div>
+      <nav>
+        <div class="nav-section">Overview</div>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="holdings.html" class="nav-link">Holdings</a>
+        <a href="portfolios.html" class="nav-link">Portfolios</a>
+        <div class="nav-section">Records</div>
+        <a href="transactions.html" class="nav-link">Record trade</a>
+        <a href="smith-maneuver.html" class="nav-link">Smith Maneuver</a>
+        <a href="tax-summary.html" class="nav-link active">Tax summary</a>
+        <div class="nav-section">Mock</div>
+        <a href="index.html" class="nav-link">All screens</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Tax summary</h1>
+          <p class="page-subtitle">Tax year 2025 · Smith Maneuver portfolio</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-ghost">Export JSON</button>
+          <button class="btn btn-primary">Export CSV</button>
+        </div>
+      </header>
+
+      <div class="grid-3" style="margin-bottom: 1.25rem;">
+        <div class="card">
+          <p class="card-title">Realized capital gains</p>
+          <p class="card-value positive">+$2,840</p>
+        </div>
+        <div class="card">
+          <p class="card-title">Dividend income (net)</p>
+          <p class="card-value">$4,920</p>
+          <p class="card-meta">Gross $5,180 · WH $260</p>
+        </div>
+        <div class="card">
+          <p class="card-title">Deductible interest est.</p>
+          <p class="card-value">$4,980</p>
+          <p class="card-meta">Smith Maneuver traced portion</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <p class="card-title">Realized gains &amp; losses by security</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Security</th>
+                <th>Dispositions</th>
+                <th>Proceeds</th>
+                <th>ACB disposed</th>
+                <th>Gain / loss</th>
+                <th>Flags</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="ticker">TSE:ENB</td>
+                <td class="mono">1</td>
+                <td class="mono">$8,420</td>
+                <td class="mono">$7,980</td>
+                <td class="mono positive">+$440</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td class="ticker">TSE:BANK</td>
+                <td class="mono">1</td>
+                <td class="mono">$4,200</td>
+                <td class="mono">$4,680</td>
+                <td class="mono negative">−$480</td>
+                <td><span class="tag tag-peach" style="background: var(--warn-bg); color: #7a5c1a;">Superficial?</span></td>
+              </tr>
+              <tr style="font-weight: 600;">
+                <td>Total</td>
+                <td></td>
+                <td class="mono">$12,620</td>
+                <td class="mono">$12,660</td>
+                <td class="mono negative">−$40</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <p class="card-title">Dividends · 2025</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Security</th>
+                  <th>Gross</th>
+                  <th>WH</th>
+                  <th>Net</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="ticker">TSE:XEI</td>
+                  <td class="mono">$2,840</td>
+                  <td class="mono">$0</td>
+                  <td class="mono">$2,840</td>
+                </tr>
+                <tr>
+                  <td class="ticker">TSE:BANK</td>
+                  <td class="mono">$1,620</td>
+                  <td class="mono">$0</td>
+                  <td class="mono">$1,620</td>
+                </tr>
+                <tr>
+                  <td class="ticker">TSE:ENB</td>
+                  <td class="mono">$720</td>
+                  <td class="mono">$260</td>
+                  <td class="mono">$460</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="card-title">Smith Maneuver · interest summary</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Charged</th>
+                  <th>Deductible est.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Jan</td>
+                  <td class="mono">$542</td>
+                  <td class="mono">$428</td>
+                </tr>
+                <tr>
+                  <td>Feb</td>
+                  <td class="mono">$528</td>
+                  <td class="mono">$418</td>
+                </tr>
+                <tr style="font-weight: 600;">
+                  <td>YTD</td>
+                  <td class="mono">$6,240</td>
+                  <td class="mono">$4,980</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

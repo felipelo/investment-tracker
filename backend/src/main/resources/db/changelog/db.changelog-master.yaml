@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/001-create-security.yaml
+  - include:
+      file: db/changelog/changes/002-create-account.yaml
+  - include:
+      file: db/changelog/changes/003-create-security-transaction.yaml
+  - include:
+      file: db/changelog/changes/004-seed-lookups.yaml

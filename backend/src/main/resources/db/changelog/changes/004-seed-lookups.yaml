@@ -1,0 +1,78 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-seed-securities
+      author: investment-tracker
+      changes:
+        - insert:
+            tableName: security
+            columns:
+              - column:
+                  name: ticker
+                  value: TSE:XEI
+              - column:
+                  name: name
+                  value: iShares CDN Select Div
+              - column:
+                  name: asset_class
+                  value: ETF
+              - column:
+                  name: currency
+                  value: CAD
+        - insert:
+            tableName: security
+            columns:
+              - column:
+                  name: ticker
+                  value: TSE:BANK
+              - column:
+                  name: name
+                  value: BMO Equal Weight Banks
+              - column:
+                  name: asset_class
+                  value: ETF
+              - column:
+                  name: currency
+                  value: CAD
+        - insert:
+            tableName: security
+            columns:
+              - column:
+                  name: ticker
+                  value: TSE:ENB
+              - column:
+                  name: name
+                  value: Enbridge Inc
+              - column:
+                  name: asset_class
+                  value: Equity
+              - column:
+                  name: currency
+                  value: CAD
+  - changeSet:
+      id: 004-seed-accounts
+      author: investment-tracker
+      changes:
+        - insert:
+            tableName: account
+            columns:
+              - column:
+                  name: label
+                  value: Questrade Margin
+              - column:
+                  name: type
+                  value: Margin
+              - column:
+                  name: currency
+                  value: CAD
+        - insert:
+            tableName: account
+            columns:
+              - column:
+                  name: label
+                  value: TD Chequing
+              - column:
+                  name: type
+                  value: Chequing
+              - column:
+                  name: currency
+                  value: CAD
