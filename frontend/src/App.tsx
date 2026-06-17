@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './components/AppShell';
 import PlaceholderPage from './pages/PlaceholderPage';
 import RecordTradePage from './pages/RecordTradePage';
+import HoldingsPage from './pages/HoldingsPage';
+import PortfoliosPage from './pages/PortfoliosPage';
 
 export default function App() {
   return (
@@ -18,18 +20,8 @@ export default function App() {
             />
           }
         />
-        <Route
-          path="/holdings"
-          element={
-            <PlaceholderPage title="Holdings" subtitle="Positions and ACB history" />
-          }
-        />
-        <Route
-          path="/portfolios"
-          element={
-            <PlaceholderPage title="Portfolios" subtitle="Portfolio list and switcher" />
-          }
-        />
+        <Route path="/holdings" element={<HoldingsPage />} />
+        <Route path="/portfolios" element={<PortfoliosPage />} />
         <Route
           path="/smith-maneuver"
           element={

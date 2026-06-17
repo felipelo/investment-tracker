@@ -7,11 +7,12 @@ import type { Account, CreateAccount } from '../api/types';
 const ACCOUNT_TYPES = ['Chequing', 'Investment (cash)', 'Margin', 'HELOC', 'Other'] as const;
 
 interface AddAccountModalProps {
+  portfolioId: number;
   onClose: () => void;
   onCreated: (account: Account) => void;
 }
 
-export default function AddAccountModal({ onClose, onCreated }: AddAccountModalProps) {
+export default function AddAccountModal({ portfolioId, onClose, onCreated }: AddAccountModalProps) {
   const createAccount = useCreateAccount();
 
   const [label, setLabel] = useState('');
@@ -32,6 +33,7 @@ export default function AddAccountModal({ onClose, onCreated }: AddAccountModalP
     setFieldErrors({});
 
     const body: CreateAccount = {
+      portfolioId,
       label,
       type,
       currency,

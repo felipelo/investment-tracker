@@ -11,28 +11,27 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "account")
-public class Account {
+@Table(name = "price_snapshot")
+public class PriceSnapshot {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "portfolio_id", nullable = false)
-    private Portfolio portfolio;
+    @JoinColumn(name = "security_id", nullable = false)
+    private Security security;
 
-    @Column(nullable = false, length = 128)
-    private String label;
+    @Column(name = "snapshot_date", nullable = false)
+    private LocalDate snapshotDate;
 
-    @Column(nullable = false, length = 24)
-    private String type;
-
-    @Column(nullable = false, columnDefinition = "CHAR(3)")
-    private String currency;
+    @Column(nullable = false, precision = 18, scale = 4)
+    private BigDecimal price;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -48,36 +47,28 @@ public class Account {
         return id;
     }
 
-    public Portfolio getPortfolio() {
-        return portfolio;
+    public Security getSecurity() {
+        return security;
     }
 
-    public void setPortfolio(Portfolio portfolio) {
-        this.portfolio = portfolio;
+    public void setSecurity(Security security) {
+        this.security = security;
     }
 
-    public String getLabel() {
-        return label;
+    public LocalDate getSnapshotDate() {
+        return snapshotDate;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
+    public void setSnapshotDate(LocalDate snapshotDate) {
+        this.snapshotDate = snapshotDate;
     }
 
-    public String getType() {
-        return type;
+    public BigDecimal getPrice() {
+        return price;
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 
     public Instant getCreatedAt() {

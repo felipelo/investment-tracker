@@ -74,9 +74,7 @@ public class SecurityTransactionService {
     private void applyRequest(SecurityTransaction transaction, CreateSecurityTransactionRequest request) {
         transaction.setDate(request.date());
         transaction.setSecurity(securityRepository.getReferenceById(request.securityId()));
-        transaction.setAccount(request.accountId() != null
-                ? accountRepository.getReferenceById(request.accountId())
-                : null);
+        transaction.setAccount(accountRepository.getReferenceById(request.accountId()));
         transaction.setAction(request.action());
         transaction.setShares(normalizedShares(request));
         transaction.setPricePerShare(normalizedPricePerShare(request));
@@ -90,7 +88,7 @@ public class SecurityTransactionService {
         if (!securityRepository.existsById(request.securityId())) {
             throw new ValidationException(Map.of("securityId", "Security not found"));
         }
-        if (request.accountId() != null && !accountRepository.existsById(request.accountId())) {
+        if (!accountRepository.existsById(request.accountId())) {
             throw new ValidationException(Map.of("accountId", "Account not found"));
         }
     }

@@ -11,7 +11,7 @@ import java.time.LocalDate;
 public record CreateSecurityTransactionRequest(
         @NotNull LocalDate date,
         @NotNull Long securityId,
-        Long accountId,
+        @NotNull Long accountId,
         @NotNull Action action,
         BigDecimal shares,
         BigDecimal pricePerShare,

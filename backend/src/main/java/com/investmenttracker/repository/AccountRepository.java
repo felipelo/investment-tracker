@@ -8,4 +8,8 @@ import java.util.List;
 public interface AccountRepository extends JpaRepository<Account, Long> {
 
     List<Account> findAllByOrderByLabelAsc();
+
+    List<Account> findByPortfolioIdOrderByLabelAsc(Long portfolioId);
+
+    boolean existsByPortfolioId(Long portfolioId);
 }

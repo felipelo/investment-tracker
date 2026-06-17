@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-backfill-transaction-account
+      author: investment-tracker
+      changes:
+        - insert:
+            tableName: account
+            columns:
+              - column:
+                  name: label
+                  value: Unassigned
+              - column:
+                  name: type
+                  value: Other
+              - column:
+                  name: currency
+                  value: CAD
+              - column:
+                  name: portfolio_id
+                  valueComputed: (SELECT id FROM portfolio WHERE name = 'Default Portfolio')
+        - sql:
+            sql: >
+              UPDATE security_transaction
+              SET account_id = (SELECT id FROM account WHERE label = 'Unassigned')
+              WHERE account_id IS NULL
+        - addNotNullConstraint:
+            tableName: security_transaction
+            columnName: account_id
+            columnDataType: BIGINT

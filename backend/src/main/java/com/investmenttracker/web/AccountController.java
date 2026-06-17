@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,9 +32,12 @@ public class AccountController {
     }
 
     @GetMapping
-    @Operation(summary = "List accounts (dropdown lookup)")
-    public List<AccountResponse> listAccounts() {
-        return accountRepository.findAllByOrderByLabelAsc().stream()
+    @Operation(summary = "List accounts (dropdown lookup), optionally scoped to a portfolio")
+    public List<AccountResponse> listAccounts(@RequestParam(required = false) Long portfolioId) {
+        var accounts = portfolioId != null
+                ? accountRepository.findByPortfolioIdOrderByLabelAsc(portfolioId)
+                : accountRepository.findAllByOrderByLabelAsc();
+        return accounts.stream()
                 .map(AccountResponse::from)
                 .toList();
     }

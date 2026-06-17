@@ -7,3 +7,11 @@ databaseChangeLog:
       file: db/changelog/changes/003-create-security-transaction.yaml
   - include:
       file: db/changelog/changes/004-seed-lookups.yaml
+  - include:
+      file: db/changelog/changes/005-create-price-snapshot.yaml
+  - include:
+      file: db/changelog/changes/006-create-portfolio.yaml
+  - include:
+      file: db/changelog/changes/007-link-account-portfolio.yaml
+  - include:
+      file: db/changelog/changes/008-backfill-transaction-account.yaml

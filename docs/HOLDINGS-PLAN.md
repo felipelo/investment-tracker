@@ -356,13 +356,13 @@ HoldingsPage
 
 Execute in order — backend before frontend.
 
-| Phase | Work | Verify |
-|-------|------|--------|
-| **A** | `AcbEngine` + unit tests | XEI mock sequence matches expected ACB/share |
-| **B** | `HoldingService` + `HoldingController` + DTOs | Integration test: seeded txns → correct `GET /holdings` |
-| **C** | `price_snapshot` migration + `PriceSnapshotService` + batch POST | Market value and unrealized populate after price entry |
-| **D** | Frontend: types, hooks, `HoldingsTable`, `HoldingHistoryTable`, `HoldingsPage`, `UpdatePricesModal` | Screen matches mock layout and DESIGN tokens |
-| **E** | Polish: query invalidation, `formatGainLoss`, cash stub, `.card-meta` date, manual QA | Success criteria checklist below |
+| Phase | Work | Verify | Status |
+|-------|------|--------|--------|
+| **A** | `AcbEngine` + unit tests | XEI mock sequence matches expected ACB/share | **Done** |
+| **B** | `HoldingService` + `HoldingController` + DTOs | Integration test: seeded txns → correct `GET /holdings` | **Done** |
+| **C** | `price_snapshot` migration + `PriceSnapshotService` + batch POST | Market value and unrealized populate after price entry | **Done** |
+| **D** | Frontend: types, hooks, `HoldingsTable`, `HoldingHistoryTable`, `HoldingsPage`, `UpdatePricesModal` | Screen matches mock layout and DESIGN tokens | **Done** |
+| **E** | Polish: query invalidation, `formatGainLoss`, cash stub, `.card-meta` date, manual QA | Success criteria checklist below | **Done** |
 
 **Rough estimate:** ~4 days focused work.
 
@@ -370,16 +370,16 @@ Execute in order — backend before frontend.
 
 ## 9. Success criteria
 
-- [ ] Positions table matches [`mock/holdings.html`](../mock/holdings.html) structure and [DESIGN.md](../DESIGN.md) tokens (`.card`, `.table-wrap`, `.mono`, `.positive` / `.negative`)
-- [ ] Securities with zero share balance are not listed
-- [ ] XEI sample data produces ACB/share ≈ $32.14 and total ACB ≈ $45,639
-- [ ] Row click shows transaction history with running ACB columns
-- [ ] “Update prices” persists via batch POST and refreshes market value / unrealized
-- [ ] `.card-meta` shows “Prices as of {date}” when snapshots exist
-- [ ] Missing price shows “—”, not a misleading zero
-- [ ] Cash row shows “Coming soon” stub
-- [ ] `AcbEngine` has unit tests independent of Spring
-- [ ] No portfolio switcher required in this slice
+- [x] Positions table matches [`mock/holdings.html`](../mock/holdings.html) structure and [DESIGN.md](../DESIGN.md) tokens (`.card`, `.table-wrap`, `.mono`, `.positive` / `.negative`)
+- [x] Securities with zero share balance are not listed (covered by `HoldingControllerTest`)
+- [x] XEI sample data produces ACB/share ≈ $32.14 and total ACB ≈ $45,639 (covered by `AcbEngineTest` + `HoldingControllerTest`)
+- [x] Row click shows transaction history with running ACB columns
+- [x] “Update prices” persists via batch POST and refreshes market value / unrealized (verified live: 133 × $42.15 → $5,605.95, unrealized +$4,242.95)
+- [x] `.card-meta` shows “Prices as of {date}” when snapshots exist
+- [x] Missing price shows “—” / “No price”, not a misleading zero
+- [x] Cash row shows “Coming soon” stub
+- [x] `AcbEngine` has unit tests independent of Spring (13 tests, no Spring context)
+- [x] No portfolio switcher required in this slice
 
 ---
 
@@ -401,4 +401,9 @@ Execute in order — backend before frontend.
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 1.1 | 2026-06-16 | Phase A complete — `com.investmenttracker.acb` engine + 13 unit tests |
+| 1.2 | 2026-06-16 | Phase B complete — holdings API + 5 integration tests |
+| 1.3 | 2026-06-16 | Phase C complete — `price_snapshot` table, batch upsert API, market value + unrealized wired into holdings |
+| 1.4 | 2026-06-16 | Phase D complete — Holdings page, table, history drill-down, update-prices modal; route wired; holdings query invalidated on trade mutations |
+| 1.5 | 2026-06-16 | Phase E complete — polish items confirmed; manual browser QA passed; all success criteria checked. Holdings slice done |
 | 1.0 | 2026-06-16 | Initial plan; open questions resolved; REQUIREMENTS.md §4.2 and §9 updated |

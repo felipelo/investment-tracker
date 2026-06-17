@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(name = "Account")
 public record AccountResponse(
         Long id,
+        Long portfolioId,
         String label,
         String type,
         String currency
@@ -13,6 +14,7 @@ public record AccountResponse(
     public static AccountResponse from(Account account) {
         return new AccountResponse(
                 account.getId(),
+                account.getPortfolio().getId(),
                 account.getLabel(),
                 account.getType(),
                 account.getCurrency()

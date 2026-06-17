@@ -56,3 +56,33 @@ export function formatNumber(value: string | null): string {
   const num = Number(value);
   return Number.isNaN(num) ? value : num.toLocaleString('en-CA');
 }
+
+export interface SignedMoney {
+  text: string;
+  className: 'positive' | 'negative' | '';
+}
+
+// Signed currency for gain/loss columns: "+$2,357" / "−$420" with the matching
+// .positive / .negative color class (DESIGN.md section 2.3).
+export function formatGainLoss(value: string | null): SignedMoney {
+  if (value === null || value === '') return { text: '—', className: '' };
+  const num = Number(value);
+  if (Number.isNaN(num)) return { text: value, className: '' };
+
+  const magnitude = currencyFormatter.format(Math.abs(num));
+  if (num > 0) return { text: `+${magnitude}`, className: 'positive' };
+  if (num < 0) return { text: `−${magnitude}`, className: 'negative' };
+  return { text: magnitude, className: '' };
+}
+
+// Signed percentage for return columns: "+14.7%" / "−3.2%".
+export function formatPercent(value: string | null): SignedMoney {
+  if (value === null || value === '') return { text: '—', className: '' };
+  const num = Number(value);
+  if (Number.isNaN(num)) return { text: value, className: '' };
+
+  const magnitude = `${Math.abs(num).toFixed(1)}%`;
+  if (num > 0) return { text: `+${magnitude}`, className: 'positive' };
+  if (num < 0) return { text: `−${magnitude}`, className: 'negative' };
+  return { text: magnitude, className: '' };
+}

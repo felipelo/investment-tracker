@@ -32,8 +32,8 @@ public class SecurityTransaction {
     @JoinColumn(name = "security_id", nullable = false)
     private Security security;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id")
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
     @Enumerated(EnumType.STRING)

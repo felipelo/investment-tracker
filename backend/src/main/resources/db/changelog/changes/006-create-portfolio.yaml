@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-portfolio
+      author: investment-tracker
+      changes:
+        - createTable:
+            tableName: portfolio
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_portfolio
+              - column:
+                  name: name
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_portfolio_name
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: base_currency
+                  type: CHAR(3)
+                  defaultValue: CAD
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(24)
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - insert:
+            tableName: portfolio
+            columns:
+              - column:
+                  name: name
+                  value: Default Portfolio
+              - column:
+                  name: description
+                  value: Auto-created to hold pre-existing accounts and transactions
+              - column:
+                  name: base_currency
+                  value: CAD
+              - column:
+                  name: type
+                  value: Other

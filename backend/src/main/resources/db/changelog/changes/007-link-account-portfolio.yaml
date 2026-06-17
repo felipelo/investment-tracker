@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-link-account-portfolio
+      author: investment-tracker
+      changes:
+        - addColumn:
+            tableName: account
+            columns:
+              - column:
+                  name: portfolio_id
+                  type: BIGINT
+        - sql:
+            sql: >
+              UPDATE account
+              SET portfolio_id = (SELECT id FROM portfolio WHERE name = 'Default Portfolio')
+              WHERE portfolio_id IS NULL
+        - addNotNullConstraint:
+            tableName: account
+            columnName: portfolio_id
+            columnDataType: BIGINT
+        - addForeignKeyConstraint:
+            baseTableName: account
+            baseColumnNames: portfolio_id
+            constraintName: fk_account_portfolio
+            referencedTableName: portfolio
+            referencedColumnNames: id
+        - createIndex:
+            indexName: idx_account_portfolio
+            tableName: account
+            columns:
+              - column:
+                  name: portfolio_id

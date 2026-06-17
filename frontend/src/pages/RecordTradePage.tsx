@@ -10,6 +10,7 @@ import {
 import { ApiError } from '../api/client';
 import type { Action, CreateSecurityTransaction, SecurityTransaction } from '../api/types';
 import { ACTIONS, actionMeta, fieldGroupFor } from '../lib/actions';
+import { usePortfolioContext } from '../context/PortfolioContext';
 import AddSecurityModal from '../components/AddSecurityModal';
 import AddAccountModal from '../components/AddAccountModal';
 import RecentTransactions from '../components/RecentTransactions';
@@ -45,8 +46,9 @@ const initialState: FormState = {
 };
 
 export default function RecordTradePage() {
+  const { activePortfolioId, activePortfolio } = usePortfolioContext();
   const securities = useSecurities();
-  const accounts = useAccounts();
+  const accounts = useAccounts(activePortfolioId);
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
   const deleteTransaction = useDeleteTransaction();
@@ -112,7 +114,7 @@ export default function RecordTradePage() {
       date: form.date,
       securityId: Number(form.securityId),
       action: form.action,
-      accountId: form.accountId ? Number(form.accountId) : null,
+      accountId: Number(form.accountId),
       notes: form.notes || null,
     };
     if (group === 'trade') {
@@ -161,7 +163,10 @@ export default function RecordTradePage() {
       <header className="page-header">
         <div>
           <h1 className="page-title">Record trade</h1>
-          <p className="page-subtitle">Security transaction · acb-tracker action model</p>
+          <p className="page-subtitle">
+            {activePortfolio ? `${activePortfolio.name} · ` : ''}Security transaction · acb-tracker
+            action model
+          </p>
         </div>
       </header>
 
@@ -331,9 +336,10 @@ export default function RecordTradePage() {
                   value={form.accountId}
                   onChange={(e) => update('accountId', e.target.value)}
                   disabled={accounts.isPending}
+                  required
                 >
                   <option value="">
-                    {accounts.isPending ? 'Loading…' : 'No account'}
+                    {accounts.isPending ? 'Loading…' : 'Select an account'}
                   </option>
                   {(accounts.data ?? []).map((a) => (
                     <option key={a.id} value={a.id}>
@@ -347,6 +353,7 @@ export default function RecordTradePage() {
                   style={{ padding: '0.5rem 0.75rem', flexShrink: 0 }}
                   aria-label="Add account"
                   onClick={() => setShowAddAccount(true)}
+                  disabled={activePortfolioId === null}
                 >
                   +
                 </button>
@@ -425,8 +432,9 @@ export default function RecordTradePage() {
         />
       )}
 
-      {showAddAccount && (
+      {showAddAccount && activePortfolioId !== null && (
         <AddAccountModal
+          portfolioId={activePortfolioId}
           onClose={() => setShowAddAccount(false)}
           onCreated={(account) => update('accountId', String(account.id))}
         />
