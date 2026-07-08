@@ -13,12 +13,15 @@ const sections: { title: string; items: NavItem[] }[] = [
       { to: '/dashboard', label: 'Dashboard' },
       { to: '/holdings', label: 'Holdings' },
       { to: '/portfolios', label: 'Portfolios' },
+      { to: '/accounts', label: 'Accounts' },
     ],
   },
   {
     title: 'Records',
     items: [
       { to: '/record-trade', label: 'Record trade' },
+      { to: '/cash-transactions', label: 'Cash transactions' },
+      { to: '/dividends', label: 'Dividends' },
       { to: '/smith-maneuver', label: 'Smith Maneuver' },
       { to: '/tax-summary', label: 'Tax summary' },
     ],

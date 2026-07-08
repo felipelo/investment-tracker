@@ -2,6 +2,15 @@ spring:
   application:
     name: investment-tracker
 
+marketdata:
+  alpha-vantage:
+    base-url: https://www.alphavantage.co
+    # Free Alpha Vantage key; set ALPHAVANTAGE_API_KEY in the environment (secrets via env only).
+    api-key: ${ALPHAVANTAGE_API_KEY:}
+    cache-ttl-seconds: 60
+    # Free tier allows ~1 request/second; throttle between symbol fetches.
+    request-gap-ms: 1100
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

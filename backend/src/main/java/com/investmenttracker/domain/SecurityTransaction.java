@@ -55,6 +55,9 @@ public class SecurityTransaction {
     @Column(name = "split_ratio", precision = 18, scale = 6)
     private BigDecimal splitRatio;
 
+    @Column(name = "denied_loss_adjustment", precision = 18, scale = 4)
+    private BigDecimal deniedLossAdjustment;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -66,6 +69,23 @@ public class SecurityTransaction {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
+    }
+
+    /**
+     * Signed effect of this transaction on the account's cash balance: a Buy consumes
+     * cash (negative), a Sell returns cash (positive). All other actions move no cash.
+     */
+    public BigDecimal cashImpact() {
+        if (action == null || shares == null || pricePerShare == null) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal fees = commission == null ? BigDecimal.ZERO : commission;
+        BigDecimal gross = shares.multiply(pricePerShare);
+        return switch (action) {
+            case BUY -> gross.add(fees).negate();
+            case SELL -> gross.subtract(fees);
+            default -> BigDecimal.ZERO;
+        };
     }
 
     public Long getId() {
@@ -142,6 +162,14 @@ public class SecurityTransaction {
 
     public void setSplitRatio(BigDecimal splitRatio) {
         this.splitRatio = splitRatio;
+    }
+
+    public BigDecimal getDeniedLossAdjustment() {
+        return deniedLossAdjustment;
+    }
+
+    public void setDeniedLossAdjustment(BigDecimal deniedLossAdjustment) {
+        this.deniedLossAdjustment = deniedLossAdjustment;
     }
 
     public String getNotes() {

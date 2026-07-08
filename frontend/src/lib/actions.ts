@@ -10,10 +10,10 @@ export interface ActionMeta {
 export const ACTIONS: ActionMeta[] = [
   { value: 'BUY', label: 'Buy', tagClass: 'tag-sage' },
   { value: 'SELL', label: 'Sell', tagClass: 'tag-peach' },
-  { value: 'RETURN_OF_CAPITAL', label: 'Return of Capital', tagClass: 'tag-butter' },
+  { value: 'RETURN_OF_CAPITAL', label: 'ROC', tagClass: 'tag-butter' },
   {
     value: 'REINVESTED_DISTRIBUTION',
-    label: 'Reinvested Distribution',
+    label: 'DRIP',
     tagClass: 'tag-lavender',
   },
   { value: 'SPLIT', label: 'Split', tagClass: 'tag-sky' },
@@ -49,6 +49,20 @@ export function formatMoney(value: string | null): string {
   if (value === null || value === '') return '—';
   const num = Number(value);
   return Number.isNaN(num) ? value : currencyFormatter.format(num);
+}
+
+// Per-share trade prices can carry up to 4 decimals (e.g. 4.9734).
+const pricePerShareFormatter = new Intl.NumberFormat('en-CA', {
+  style: 'currency',
+  currency: 'CAD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 4,
+});
+
+export function formatPricePerShare(value: string | null): string {
+  if (value === null || value === '') return '—';
+  const num = Number(value);
+  return Number.isNaN(num) ? value : pricePerShareFormatter.format(num);
 }
 
 export function formatNumber(value: string | null): string {

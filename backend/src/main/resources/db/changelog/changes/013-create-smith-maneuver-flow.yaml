@@ -1,0 +1,104 @@
+databaseChangeLog:
+  - changeSet:
+      id: 013-create-smith-maneuver-flow
+      author: investment-tracker
+      changes:
+        - createTable:
+            tableName: smith_maneuver_flow
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_smith_maneuver_flow
+              - column:
+                  name: portfolio_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_sm_flow_portfolio
+                    references: portfolio(id)
+              - column:
+                  name: heloc_account_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_sm_flow_heloc_account
+                    references: account(id)
+              - column:
+                  name: label
+                  type: VARCHAR(160)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: investment_use_amount
+                  type: NUMERIC(18,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notes
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: smith_maneuver_flow_step
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_smith_maneuver_flow_step
+              - column:
+                  name: flow_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_sm_flow_step_flow
+                    references: smith_maneuver_flow(id)
+                    deleteCascade: true
+              - column:
+                  name: step_order
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: cash_transaction_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_sm_flow_step_cash
+                    references: cash_transaction(id)
+              - column:
+                  name: security_transaction_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_sm_flow_step_security
+                    references: security_transaction(id)
+        - sql:
+            sql: >
+              ALTER TABLE smith_maneuver_flow_step
+              ADD CONSTRAINT chk_sm_flow_step_ref
+              CHECK ((cash_transaction_id IS NOT NULL) <> (security_transaction_id IS NOT NULL));
+        - createIndex:
+            indexName: idx_sm_flow_portfolio
+            tableName: smith_maneuver_flow
+            columns:
+              - column:
+                  name: portfolio_id
+        - createIndex:
+            indexName: idx_sm_flow_step_flow
+            tableName: smith_maneuver_flow_step
+            columns:
+              - column:
+                  name: flow_id
+              - column:
+                  name: step_order

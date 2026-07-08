@@ -20,6 +20,7 @@ public record SecurityTransactionResponse(
         BigDecimal commission,
         BigDecimal cashAmount,
         BigDecimal splitRatio,
+        BigDecimal deniedLossAdjustment,
         String notes,
         Instant createdAt
 ) {
@@ -35,6 +36,7 @@ public record SecurityTransactionResponse(
                 transaction.getCommission(),
                 transaction.getCashAmount(),
                 transaction.getSplitRatio(),
+                transaction.getDeniedLossAdjustment(),
                 transaction.getNotes(),
                 transaction.getCreatedAt()
         );

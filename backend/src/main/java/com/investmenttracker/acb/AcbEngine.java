@@ -4,6 +4,8 @@ import com.investmenttracker.domain.Action;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -18,6 +20,7 @@ public final class AcbEngine {
     static final int MONEY_SCALE = 4;
     static final int SHARE_SCALE = 6;
     static final int ACB_PER_SHARE_SCALE = 8;
+    static final int SUPERFICIAL_LOSS_WINDOW_DAYS = 30;
 
     private AcbEngine() {
     }
@@ -62,7 +65,34 @@ public final class AcbEngine {
             ));
         }
 
-        return List.copyOf(rows);
+        return List.copyOf(flagSuperficialLosses(rows));
+    }
+
+    /**
+     * Flags each loss-generating {@code SELL} that has a {@code BUY} of the same security within the
+     * CRA superficial-loss window (+/-30 calendar days). Mirrors the acb-tracker workbook's column R
+     * COUNTIFS detection. Callers compute one security at a time, so every row here is the same security.
+     */
+    private static List<ComputedTransactionRow> flagSuperficialLosses(List<ComputedTransactionRow> rows) {
+        var buyDates = rows.stream()
+                .filter(row -> row.action() == Action.BUY)
+                .map(ComputedTransactionRow::date)
+                .toList();
+
+        var flagged = new ArrayList<ComputedTransactionRow>(rows.size());
+        for (var row : rows) {
+            boolean flag = row.action() == Action.SELL
+                    && row.capitalGainLoss() != null
+                    && row.capitalGainLoss().compareTo(BigDecimal.ZERO) < 0
+                    && hasBuyWithinWindow(buyDates, row.date());
+            flagged.add(row.withSuperficialLossFlag(flag));
+        }
+        return flagged;
+    }
+
+    private static boolean hasBuyWithinWindow(List<LocalDate> buyDates, LocalDate sellDate) {
+        return buyDates.stream()
+                .anyMatch(buyDate -> Math.abs(ChronoUnit.DAYS.between(buyDate, sellDate)) <= SUPERFICIAL_LOSS_WINDOW_DAYS);
     }
 
     public static HoldingSummary summarize(List<SecurityTransactionInput> transactions) {

@@ -34,6 +34,7 @@ services:
       POSTGRES_DB: investment_tracker
       POSTGRES_USER: investment_tracker
       POSTGRES_PASSWORD: investment_tracker
+      ALPHAVANTAGE_API_KEY: ${ALPHAVANTAGE_API_KEY:-}
     ports:
       - "8080:8080"
 

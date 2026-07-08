@@ -2,17 +2,30 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client';
 import type {
   Account,
+  CashTransaction,
   CreateAccount,
+  CreateCashTransaction,
+  UpdateAccount,
+  CreateDividend,
   CreatePortfolio,
+  CreatePortfolioSnapshot,
   CreatePriceSnapshots,
   CreateSecurity,
   CreateSecurityTransaction,
+  CreateSmithManeuverFlow,
+  DashboardData,
+  Dividend,
+  DividendSummary,
   Holding,
   HoldingHistoryRow,
   Portfolio,
+  PortfolioSnapshot,
   PriceSnapshot,
+  Quote,
   Security,
   SecurityTransaction,
+  SmithManeuverData,
+  SmithManeuverFlow,
   TransactionFilters,
   UpdatePortfolio,
 } from './types';
@@ -26,6 +39,14 @@ const keys = {
     ['holdings', portfolioId, securityId, 'history'] as const,
   transactions: (filters?: TransactionFilters) =>
     ['security-transactions', filters ?? {}] as const,
+  dashboard: (portfolioId: number) => ['dashboard', portfolioId] as const,
+  dividends: (portfolioId: number) => ['dividends', portfolioId] as const,
+  dividendSummary: (portfolioId: number, year: number | null) =>
+    ['dividends', 'summary', portfolioId, year ?? 'latest'] as const,
+  portfolioSnapshots: (portfolioId: number) => ['portfolio-snapshots', portfolioId] as const,
+  cashTransactions: (portfolioId: number) => ['cash-transactions', portfolioId] as const,
+  smithManeuver: (portfolioId: number) => ['smith-maneuver', portfolioId] as const,
+  quotes: (symbols: string) => ['quotes', symbols] as const,
 };
 
 export function useSecurities() {
@@ -61,6 +82,14 @@ export function useTransactions(filters?: TransactionFilters) {
   });
 }
 
+export function useTransaction(id: number | null) {
+  return useQuery({
+    queryKey: ['security-transactions', 'detail', id] as const,
+    queryFn: () => api.get<SecurityTransaction>(`/security-transactions/${id}`),
+    enabled: id !== null,
+  });
+}
+
 export function useHoldings(portfolioId: number | null) {
   return useQuery({
     queryKey: portfolioId !== null ? keys.holdings(portfolioId) : ['holdings', 'none'],
@@ -89,6 +118,184 @@ export function useCreatePriceSnapshots() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['holdings'] });
       queryClient.invalidateQueries({ queryKey: keys.portfolios });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio-snapshots'] });
+    },
+  });
+}
+
+export function useQuotes(symbols: string[]) {
+  const joined = symbols.join(',');
+  return useQuery({
+    queryKey: keys.quotes(joined),
+    queryFn: () => api.get<Quote[]>('/quotes', { symbols: joined }),
+    enabled: symbols.length > 0,
+    staleTime: 60_000,
+  });
+}
+
+export function useDashboard(portfolioId: number | null) {
+  return useQuery({
+    queryKey: portfolioId !== null ? keys.dashboard(portfolioId) : ['dashboard', 'none'],
+    queryFn: () => api.get<DashboardData>(`/portfolios/${portfolioId}/dashboard`),
+    enabled: portfolioId !== null,
+  });
+}
+
+export function useDividends(portfolioId: number | null) {
+  return useQuery({
+    queryKey: portfolioId !== null ? keys.dividends(portfolioId) : ['dividends', 'none'],
+    queryFn: () => api.get<Dividend[]>('/dividends', { portfolioId: portfolioId! }),
+    enabled: portfolioId !== null,
+  });
+}
+
+export function useDividendSummary(portfolioId: number | null, year: number | null) {
+  return useQuery({
+    queryKey:
+      portfolioId !== null
+        ? keys.dividendSummary(portfolioId, year)
+        : ['dividends', 'summary', 'none'],
+    queryFn: () =>
+      api.get<DividendSummary>(
+        `/portfolios/${portfolioId}/dividends/summary`,
+        year !== null ? { year } : undefined,
+      ),
+    enabled: portfolioId !== null,
+  });
+}
+
+export function useCreateDividend() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateDividend) => api.post<Dividend>('/dividends', body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dividends'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+export function useUpdateDividend() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: CreateDividend }) =>
+      api.put<Dividend>(`/dividends/${id}`, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dividends'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+export function useDeleteDividend() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.del(`/dividends/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dividends'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+export function useCashTransactions(portfolioId: number | null) {
+  return useQuery({
+    queryKey:
+      portfolioId !== null ? keys.cashTransactions(portfolioId) : ['cash-transactions', 'none'],
+    queryFn: () => api.get<CashTransaction[]>('/cash-transactions', { portfolioId: portfolioId! }),
+    enabled: portfolioId !== null,
+  });
+}
+
+function invalidateCashTransactionViews(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ['cash-transactions'] });
+  queryClient.invalidateQueries({ queryKey: keys.accounts });
+  queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+}
+
+export function useCreateCashTransaction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateCashTransaction) =>
+      api.post<CashTransaction>('/cash-transactions', body),
+    onSuccess: () => invalidateCashTransactionViews(queryClient),
+  });
+}
+
+export function useUpdateCashTransaction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: CreateCashTransaction }) =>
+      api.put<CashTransaction>(`/cash-transactions/${id}`, body),
+    onSuccess: () => invalidateCashTransactionViews(queryClient),
+  });
+}
+
+export function useDeleteCashTransaction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.del(`/cash-transactions/${id}`),
+    onSuccess: () => invalidateCashTransactionViews(queryClient),
+  });
+}
+
+export function useSmithManeuver(portfolioId: number | null) {
+  return useQuery({
+    queryKey:
+      portfolioId !== null ? keys.smithManeuver(portfolioId) : ['smith-maneuver', 'none'],
+    queryFn: () => api.get<SmithManeuverData>(`/portfolios/${portfolioId}/smith-maneuver`),
+    enabled: portfolioId !== null,
+  });
+}
+
+function invalidateSmithManeuverViews(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ['smith-maneuver'] });
+}
+
+export function useCreateFlow() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateSmithManeuverFlow) =>
+      api.post<SmithManeuverFlow>('/smith-maneuver-flows', body),
+    onSuccess: () => invalidateSmithManeuverViews(queryClient),
+  });
+}
+
+export function useUpdateFlow() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: CreateSmithManeuverFlow }) =>
+      api.put<SmithManeuverFlow>(`/smith-maneuver-flows/${id}`, body),
+    onSuccess: () => invalidateSmithManeuverViews(queryClient),
+  });
+}
+
+export function useDeleteFlow() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.del(`/smith-maneuver-flows/${id}`),
+    onSuccess: () => invalidateSmithManeuverViews(queryClient),
+  });
+}
+
+export function usePortfolioSnapshots(portfolioId: number | null) {
+  return useQuery({
+    queryKey:
+      portfolioId !== null ? keys.portfolioSnapshots(portfolioId) : ['portfolio-snapshots', 'none'],
+    queryFn: () => api.get<PortfolioSnapshot[]>(`/portfolios/${portfolioId}/snapshots`),
+    enabled: portfolioId !== null,
+  });
+}
+
+export function useCreatePortfolioSnapshot(portfolioId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreatePortfolioSnapshot) =>
+      api.post<PortfolioSnapshot>(`/portfolios/${portfolioId}/snapshots`, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.portfolioSnapshots(portfolioId) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
@@ -128,6 +335,7 @@ function invalidateTransactionViews(queryClient: ReturnType<typeof useQueryClien
   queryClient.invalidateQueries({ queryKey: ['security-transactions'] });
   queryClient.invalidateQueries({ queryKey: ['holdings'] });
   queryClient.invalidateQueries({ queryKey: keys.portfolios });
+  queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 }
 
 export function useCreateTransaction() {
@@ -170,6 +378,27 @@ export function useCreateAccount() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: CreateAccount) => api.post<Account>('/accounts', body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.accounts });
+    },
+  });
+}
+
+export function useUpdateAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: UpdateAccount }) =>
+      api.put<Account>(`/accounts/${id}`, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.accounts });
+    },
+  });
+}
+
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.del(`/accounts/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.accounts });
     },

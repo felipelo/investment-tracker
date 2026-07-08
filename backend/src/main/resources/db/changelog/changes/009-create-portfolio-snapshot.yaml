@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-create-portfolio-snapshot
+      author: investment-tracker
+      changes:
+        - createTable:
+            tableName: portfolio_snapshot
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_portfolio_snapshot
+              - column:
+                  name: portfolio_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_portfolio_snapshot_portfolio
+                    references: portfolio(id)
+              - column:
+                  name: snapshot_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: market_value
+                  type: NUMERIC(18,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: portfolio_snapshot
+            columnNames: portfolio_id, snapshot_date
+            constraintName: uq_portfolio_snapshot_portfolio_date
+        - sql:
+            sql: >
+              ALTER TABLE portfolio_snapshot
+              ADD CONSTRAINT chk_portfolio_snapshot_market_value
+              CHECK (market_value >= 0);
+        - createIndex:
+            indexName: idx_portfolio_snapshot_portfolio_date
+            tableName: portfolio_snapshot
+            columns:
+              - column:
+                  name: portfolio_id
+              - column:
+                  name: snapshot_date

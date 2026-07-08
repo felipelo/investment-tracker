@@ -18,7 +18,7 @@ public final class SecurityTransactionInputs {
                 transaction.getCommission(),
                 transaction.getCashAmount(),
                 transaction.getSplitRatio(),
-                null,
+                transaction.getDeniedLossAdjustment(),
                 transaction.getNotes()
         );
     }

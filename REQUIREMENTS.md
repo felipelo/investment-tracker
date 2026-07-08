@@ -42,7 +42,7 @@ These are explicitly deferred to later phases:
 
 - Broker/API integrations and automated CSV import from brokerages.
 - Multi-user accounts, authentication, and cloud hosting.
-- Real-time or delayed market data feeds (prices are entered manually in V1).
+- Automatic or scheduled market-data feeds, and using live data to compute returns. A read-only delayed-quote *lookup* is available (see Section 9), but dashboard value and returns are still computed from manually recorded snapshots in V1.
 - Automated tax filing or generation of official CRA forms.
 - Native mobile applications.
 - Migration/import from the existing `acb-tracker` Excel workbook (noted as a future option in Section 9).
@@ -350,8 +350,10 @@ Deferred decisions that do not block V1:
 
 - **Portfolio scoping:** The Portfolio entity, portfolio-scoped accounts and holdings, and the active-portfolio switcher on Dashboard and Holdings. The first Holdings slice uses global aggregation (Section 4.2); refactor queries and UI when Portfolio management is built.
 - **Cash on Holdings:** Account cash balances and the Holdings cash row (market value from derived account balance, as in the mock). Until cash transactions and balance derivation exist, the UI shows a coming-soon stub only.
+- **Auto-linked cash legs for trades (V2):** Recording a security transaction (`Buy`/`Sell`) does not currently create a corresponding cash transaction; the two are entered independently. In V2, a trade should be able to emit a paired cash-flow leg (a `Withdrawal` for a `Buy`, a `Deposit` for a `Sell`) in the trade's investment account, linked back to the originating security transaction. Open design points: automatic versus opt-in (a checkbox on the trade form); how to avoid double-counting once account balance derivation lands; and whether editing or deleting the trade cascades to the linked cash leg.
 - Broker CSV import formats (e.g., Questrade, Wealthsimple, TD).
 - A live or historical quote provider to automate returns instead of manual snapshots.
+- **Live current prices per asset (partially implemented):** A read-only delayed-quote endpoint (`GET /api/v1/quotes?symbols=...`, backed by Alpha Vantage's `GLOBAL_QUOTE` endpoint, keyed by the `ALPHAVANTAGE_API_KEY` environment variable) fetches current (delayed) prices by ticker symbol; each symbol is fetched independently so one bad ticker does not fail the request. Results are cached for 60s and requests are throttled (~1/sec) to stay within the free tier's limits (25 requests/day). The Dashboard shows a display-only live-prices panel (auto-fetch on load plus a reload button) that does **not** alter the snapshot-based portfolio value, returns, or allocation. The Holdings "Update prices" modal can fetch live prices to pre-fill the form, which the user then saves as manual price snapshots through the existing flow. Still future: automatic/scheduled persistence of fetched prices, using live data directly in return computations, and a richer security-to-market symbol mapping (the frontend currently maps `TSE:` tickers to Alpha Vantage `.TRT` symbols and passes other tickers through unchanged). FX/multi-currency handling remains out of scope, so quotes are shown in each security's native currency.
 - Registered-account-specific rules (TFSA/RRSP contribution room and limits).
 - Multi-currency securities and FX gain/loss.
 - Importing existing data from the `acb-tracker` Excel workbook.

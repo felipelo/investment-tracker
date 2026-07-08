@@ -432,6 +432,43 @@ tr:hover td { background: var(--bg); }
   outline-offset: 1px;
 }
 
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  text-transform: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  margin-top: 0.625rem;
+}
+
+.checkbox-label input[type='checkbox'] {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.dividends-form-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.dividends-form-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .dividends-form-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Flow diagram */
 .flow-chain {
   display: flex;

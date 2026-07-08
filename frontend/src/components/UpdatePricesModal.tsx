@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCreatePriceSnapshots } from '../api/hooks';
-import { ApiError } from '../api/client';
-import type { CreatePriceSnapshot, Holding } from '../api/types';
+import { api, ApiError } from '../api/client';
+import type { CreatePriceSnapshot, Holding, Quote } from '../api/types';
+import { tickerToMarketSymbol } from '../lib/symbols';
 
 interface UpdatePricesModalProps {
   holdings: Holding[];
@@ -15,6 +17,7 @@ function today(): string {
 
 export default function UpdatePricesModal({ holdings, onClose }: UpdatePricesModalProps) {
   const createPrices = useCreatePriceSnapshots();
+  const queryClient = useQueryClient();
 
   const [date, setDate] = useState(today());
   const [prices, setPrices] = useState<Record<number, string>>(() =>
@@ -22,6 +25,9 @@ export default function UpdatePricesModal({ holdings, onClose }: UpdatePricesMod
       holdings.map((h) => [h.securityId, h.latestPrice ?? '']),
     ),
   );
+  const [fetchingLive, setFetchingLive] = useState(false);
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [unavailable, setUnavailable] = useState<string[]>([]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -31,11 +37,48 @@ export default function UpdatePricesModal({ holdings, onClose }: UpdatePricesMod
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  async function fetchLivePrices() {
+    setFetchingLive(true);
+    setLiveError(null);
+    setUnavailable([]);
+    try {
+      const mapped = holdings.map((h) => ({ holding: h, symbol: tickerToMarketSymbol(h.ticker) }));
+      const joined = Array.from(new Set(mapped.map((m) => m.symbol))).join(',');
+      const quotes = await queryClient.fetchQuery({
+        queryKey: ['quotes', joined],
+        queryFn: () => api.get<Quote[]>('/quotes', { symbols: joined }),
+        staleTime: 60_000,
+      });
+
+      const bySymbol = new Map(quotes.map((q) => [q.symbol, q]));
+      const updates: Record<number, string> = {};
+      const missing: string[] = [];
+      for (const { holding, symbol } of mapped) {
+        const quote = bySymbol.get(symbol);
+        if (quote && quote.available && quote.price !== null) {
+          updates[holding.securityId] = String(quote.price);
+        } else {
+          missing.push(holding.ticker);
+        }
+      }
+      setPrices((prev) => ({ ...prev, ...updates }));
+      setUnavailable(missing);
+    } catch (error) {
+      setLiveError(error instanceof ApiError ? error.message : 'Could not fetch live prices.');
+    } finally {
+      setFetchingLive(false);
+    }
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
     const snapshots: CreatePriceSnapshot[] = holdings
-      .map((h) => ({ securityId: h.securityId, date, price: prices[h.securityId]?.trim() ?? '' }))
+      .map((h) => ({
+        securityId: h.securityId,
+        date,
+        price: String(prices[h.securityId] ?? '').trim(),
+      }))
       .filter((s) => s.price !== '');
 
     if (snapshots.length === 0) {
@@ -66,6 +109,18 @@ export default function UpdatePricesModal({ holdings, onClose }: UpdatePricesMod
         {generalError && (
           <div className="banner banner-warn" style={{ marginBottom: '1rem' }}>
             {generalError}
+          </div>
+        )}
+
+        {liveError && (
+          <div className="banner banner-warn" style={{ marginBottom: '1rem' }}>
+            {liveError}
+          </div>
+        )}
+
+        {unavailable.length > 0 && (
+          <div className="banner banner-info" style={{ marginBottom: '1rem' }}>
+            No live price for: {unavailable.join(', ')}. Enter these manually.
           </div>
         )}
 
@@ -123,6 +178,14 @@ export default function UpdatePricesModal({ holdings, onClose }: UpdatePricesMod
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
             <button type="submit" className="btn btn-primary" disabled={createPrices.isPending}>
               {createPrices.isPending ? 'Saving…' : 'Save prices'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={fetchLivePrices}
+              disabled={fetchingLive}
+            >
+              {fetchingLive ? 'Fetching…' : 'Fetch live prices'}
             </button>
             <button type="button" className="btn btn-ghost" onClick={onClose}>
               Cancel

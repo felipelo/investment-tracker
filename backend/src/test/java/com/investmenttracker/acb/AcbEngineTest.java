@@ -8,8 +8,10 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AcbEngineTest {
 
@@ -174,6 +176,71 @@ class AcbEngineTest {
         var sell = rows.get(1);
         assertEquals(new BigDecimal("-1000.0000"), sell.acbChange());
         assertEquals(new BigDecimal("250.0000"), sell.deniedLossAdjustment());
+        assertEquals(new BigDecimal("1250.0000"), sell.totalAcb());
+    }
+
+    @Test
+    void flagsSuperficialLossWhenBuyPrecedesLossSellWithin30Days() {
+        var rows = AcbEngine.compute(List.of(
+                txn(1, "2024-01-01", Action.BUY, 100, "20.00", "0"),
+                txn(2, "2024-01-20", Action.SELL, 50, "15.00", "0")
+        ));
+
+        assertTrue(rows.get(1).capitalGainLoss().compareTo(BigDecimal.ZERO) < 0);
+        assertTrue(rows.get(1).superficialLossFlag());
+    }
+
+    @Test
+    void flagsSuperficialLossWhenBuyFollowsLossSellWithin30Days() {
+        var rows = AcbEngine.compute(List.of(
+                txn(1, "2024-01-01", Action.BUY, 100, "20.00", "0"),
+                txn(2, "2024-06-01", Action.SELL, 50, "15.00", "0"),
+                txn(3, "2024-06-15", Action.BUY, 10, "16.00", "0")
+        ));
+
+        assertTrue(rows.get(1).superficialLossFlag());
+    }
+
+    @Test
+    void doesNotFlagWhenNearestBuyIsMoreThan30DaysAway() {
+        var rows = AcbEngine.compute(List.of(
+                txn(1, "2024-01-01", Action.BUY, 100, "20.00", "0"),
+                txn(2, "2024-06-01", Action.SELL, 50, "15.00", "0")
+        ));
+
+        assertFalse(rows.get(1).superficialLossFlag());
+    }
+
+    @Test
+    void doesNotFlagSellAtGainEvenWithNearbyBuy() {
+        var rows = AcbEngine.compute(List.of(
+                txn(1, "2024-01-01", Action.BUY, 100, "20.00", "0"),
+                txn(2, "2024-01-20", Action.SELL, 50, "30.00", "0")
+        ));
+
+        assertTrue(rows.get(1).capitalGainLoss().compareTo(BigDecimal.ZERO) > 0);
+        assertFalse(rows.get(1).superficialLossFlag());
+    }
+
+    @Test
+    void deniedLossAdjustmentAndSuperficialFlagCombine() {
+        var rows = AcbEngine.compute(List.of(
+                txn(1, "2024-01-01", Action.BUY, 100, "20.00", "0"),
+                SecurityTransactionInput.builder()
+                        .id(2)
+                        .date(LocalDate.of(2024, 1, 20))
+                        .action(Action.SELL)
+                        .shares(50)
+                        .pricePerShare("15.00")
+                        .commission("0")
+                        .deniedLossAdjustment(new BigDecimal("250.00"))
+                        .build()
+        ));
+
+        var sell = rows.get(1);
+        assertTrue(sell.superficialLossFlag());
+        assertEquals(new BigDecimal("250.0000"), sell.deniedLossAdjustment());
+        // remaining 50 shares cost 1000, plus 250 add-back = 1250
         assertEquals(new BigDecimal("1250.0000"), sell.totalAcb());
     }
 

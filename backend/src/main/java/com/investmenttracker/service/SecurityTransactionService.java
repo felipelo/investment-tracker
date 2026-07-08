@@ -81,6 +81,7 @@ public class SecurityTransactionService {
         transaction.setCommission(normalizedCommission(request));
         transaction.setCashAmount(normalizedCashAmount(request));
         transaction.setSplitRatio(normalizedSplitRatio(request));
+        transaction.setDeniedLossAdjustment(normalizedDeniedLossAdjustment(request));
         transaction.setNotes(request.notes());
     }
 
@@ -102,8 +103,21 @@ public class SecurityTransactionService {
             case SPLIT -> validateSplit(request, errors);
         }
 
+        validateDeniedLossAdjustment(request, errors);
+
         if (!errors.isEmpty()) {
             throw new ValidationException(errors);
+        }
+    }
+
+    private void validateDeniedLossAdjustment(CreateSecurityTransactionRequest request, Map<String, String> errors) {
+        if (request.deniedLossAdjustment() == null) {
+            return;
+        }
+        if (request.action() != Action.SELL) {
+            errors.put("deniedLossAdjustment", "Denied loss adjustment is only allowed for Sell");
+        } else if (request.deniedLossAdjustment().compareTo(BigDecimal.ZERO) < 0) {
+            errors.put("deniedLossAdjustment", "Denied loss adjustment must be zero or greater");
         }
     }
 
@@ -175,5 +189,9 @@ public class SecurityTransactionService {
 
     private BigDecimal normalizedSplitRatio(CreateSecurityTransactionRequest request) {
         return request.action() == Action.SPLIT ? request.splitRatio() : null;
+    }
+
+    private BigDecimal normalizedDeniedLossAdjustment(CreateSecurityTransactionRequest request) {
+        return request.action() == Action.SELL ? request.deniedLossAdjustment() : null;
     }
 }

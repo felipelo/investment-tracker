@@ -1,5 +1,5 @@
 import { useAccounts, useSecurities, useTransactions } from '../api/hooks';
-import { actionMeta, formatMoney, formatNumber } from '../lib/actions';
+import { actionMeta, formatMoney, formatNumber, formatPricePerShare } from '../lib/actions';
 import type { SecurityTransaction } from '../api/types';
 
 interface RecentTransactionsProps {
@@ -82,7 +82,7 @@ export default function RecentTransactions({ selectedId, onSelect }: RecentTrans
                       {formatNumber(tx.shares)}
                     </td>
                     <td className="mono" style={{ textAlign: 'right' }}>
-                      {formatMoney(tx.pricePerShare)}
+                      {formatPricePerShare(tx.pricePerShare)}
                     </td>
                     <td className="mono" style={{ textAlign: 'right' }}>
                       {formatMoney(tx.cashAmount)}

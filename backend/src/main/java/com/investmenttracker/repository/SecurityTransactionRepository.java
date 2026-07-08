@@ -6,10 +6,18 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface SecurityTransactionRepository extends JpaRepository<SecurityTransaction, Long> {
+
+    @Query("""
+            SELECT DISTINCT a.portfolio.id FROM SecurityTransaction t
+            JOIN t.account a
+            WHERE t.security.id IN :securityIds
+            """)
+    List<Long> findPortfolioIdsHoldingSecurities(@Param("securityIds") Collection<Long> securityIds);
 
     @Query("""
             SELECT t FROM SecurityTransaction t
@@ -38,6 +46,26 @@ public interface SecurityTransactionRepository extends JpaRepository<SecurityTra
 
     @Query("""
             SELECT t FROM SecurityTransaction t
+            JOIN FETCH t.security
+            JOIN FETCH t.account a
+            WHERE a.id IN :accountIds
+              AND t.action IN (com.investmenttracker.domain.Action.BUY,
+                               com.investmenttracker.domain.Action.SELL)
+            """)
+    List<SecurityTransaction> findCashImpactingByAccountIds(@Param("accountIds") Collection<Long> accountIds);
+
+    @Query("""
+            SELECT t FROM SecurityTransaction t
+            JOIN FETCH t.security
+            JOIN FETCH t.account a
+            WHERE a.portfolio.id = :portfolioId
+              AND t.action IN (com.investmenttracker.domain.Action.BUY,
+                               com.investmenttracker.domain.Action.SELL)
+            """)
+    List<SecurityTransaction> findCashImpactingByPortfolio(@Param("portfolioId") Long portfolioId);
+
+    @Query("""
+            SELECT t FROM SecurityTransaction t
             JOIN FETCH t.security s
             JOIN FETCH t.account a
             WHERE a.portfolio.id = :portfolioId
@@ -57,4 +85,6 @@ public interface SecurityTransactionRepository extends JpaRepository<SecurityTra
             @Param("securityId") Long securityId,
             @Param("portfolioId") Long portfolioId
     );
+
+    boolean existsByAccountId(Long accountId);
 }

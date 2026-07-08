@@ -18,6 +18,7 @@ public record CreateSecurityTransactionRequest(
         BigDecimal commission,
         BigDecimal cashAmount,
         BigDecimal splitRatio,
+        BigDecimal deniedLossAdjustment,
         String notes
 ) {
 }

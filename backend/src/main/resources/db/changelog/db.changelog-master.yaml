@@ -15,3 +15,17 @@ databaseChangeLog:
       file: db/changelog/changes/007-link-account-portfolio.yaml
   - include:
       file: db/changelog/changes/008-backfill-transaction-account.yaml
+  - include:
+      file: db/changelog/changes/009-create-portfolio-snapshot.yaml
+  - include:
+      file: db/changelog/changes/010-create-dividend.yaml
+  - include:
+      file: db/changelog/changes/011-extend-account.yaml
+  - include:
+      file: db/changelog/changes/012-create-cash-transaction.yaml
+  - include:
+      file: db/changelog/changes/013-create-smith-maneuver-flow.yaml
+  - include:
+      file: db/changelog/changes/014-add-denied-loss-adjustment.yaml
+  - include:
+      file: db/changelog/changes/015-add-dividend-account.yaml

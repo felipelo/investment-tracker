@@ -23,7 +23,8 @@ public record ComputedTransactionRow(
         BigDecimal totalAcb,
         BigDecimal acbPerShare,
         BigDecimal proceeds,
-        BigDecimal capitalGainLoss
+        BigDecimal capitalGainLoss,
+        boolean superficialLossFlag
 ) {
     static ComputedTransactionRow from(
             SecurityTransactionInput input,
@@ -53,7 +54,31 @@ public record ComputedTransactionRow(
                 totalAcb,
                 acbPerShare,
                 proceeds,
-                capitalGainLoss
+                capitalGainLoss,
+                false
+        );
+    }
+
+    ComputedTransactionRow withSuperficialLossFlag(boolean flag) {
+        return new ComputedTransactionRow(
+                transactionId,
+                date,
+                action,
+                shares,
+                pricePerShare,
+                commission,
+                cashAmount,
+                splitRatio,
+                notes,
+                shareChange,
+                shareBalance,
+                acbChange,
+                deniedLossAdjustment,
+                totalAcb,
+                acbPerShare,
+                proceeds,
+                capitalGainLoss,
+                flag
         );
     }
 }

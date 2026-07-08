@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accounts — Investment Tracker</title>
+  <link rel="stylesheet" href="css/identity.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">IT</div>
+        <div>
+          <div class="brand-text">Investment Tracker</div>
+          <div class="brand-sub">Local · CAD</div>
+        </div>
+      </div>
+      <nav>
+        <div class="nav-section">Overview</div>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="holdings.html" class="nav-link">Holdings</a>
+        <a href="portfolios.html" class="nav-link">Portfolios</a>
+        <a href="accounts.html" class="nav-link active">Accounts</a>
+        <div class="nav-section">Records</div>
+        <a href="transactions.html" class="nav-link">Record trade</a>
+        <a href="smith-maneuver.html" class="nav-link">Smith Maneuver</a>
+        <a href="tax-summary.html" class="nav-link">Tax summary</a>
+        <div class="nav-section">Mock</div>
+        <a href="index.html" class="nav-link">All screens</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Accounts</h1>
+          <p class="page-subtitle">Margin — Questrade · cash &amp; securities containers</p>
+        </div>
+        <button class="btn btn-primary">New account</button>
+      </header>
+
+      <div class="banner banner-info">
+        <span>Current balance currently equals the opening balance. Derived balances from cash transactions &amp; transfers are coming in a later slice.</span>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Type</th>
+                <th>Currency</th>
+                <th>Opening balance</th>
+                <th>Current balance</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="ticker">Questrade Margin</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">Questrade</div>
+                </td>
+                <td><span class="tag tag-sage">Margin</span></td>
+                <td class="mono">CAD</td>
+                <td class="mono">$10,000.00</td>
+                <td class="mono">$10,000.00</td>
+                <td style="text-align: right; white-space: nowrap;">
+                  <button class="btn btn-ghost" style="padding: 0.375rem 0.75rem;">Delete</button>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="ticker">TD Chequing</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">TD Canada Trust</div>
+                </td>
+                <td><span class="tag tag-sky">Chequing</span></td>
+                <td class="mono">CAD</td>
+                <td class="mono">$3,500.00</td>
+                <td class="mono">$3,500.00</td>
+                <td style="text-align: right; white-space: nowrap;">
+                  <button class="btn btn-ghost" style="padding: 0.375rem 0.75rem;">Delete</button>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="ticker">TD HELOC</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">TD Canada Trust</div>
+                </td>
+                <td><span class="tag tag-lavender">HELOC</span></td>
+                <td class="mono">CAD</td>
+                <td class="mono">$0.00</td>
+                <td class="mono">$0.00</td>
+                <td style="text-align: right; white-space: nowrap;">
+                  <button class="btn btn-ghost" style="padding: 0.375rem 0.75rem;">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 1.25rem; align-items: start;">
+        <div class="card">
+          <p class="card-title">Questrade Margin — credit line</p>
+          <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Credit limit</div>
+              <div class="mono" style="font-size: 1.25rem; font-weight: 600;">$50,000.00</div>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Interest rate</div>
+              <div class="mono" style="font-size: 1.25rem; font-weight: 600;">7.20%</div>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Drawn</div>
+              <div class="mono" style="font-size: 1.25rem; font-weight: 600;">$10,000.00</div>
+            </div>
+            <div>
+              <div style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Available</div>
+              <div class="mono positive" style="font-size: 1.25rem; font-weight: 600;">$40,000.00</div>
+            </div>
+          </div>
+          <p class="card-meta">Margin &amp; HELOC credit limit and interest rate feed the Smith Maneuver deductible-interest estimate.</p>
+        </div>
+
+        <div class="card">
+          <p class="card-title">Edit Questrade Margin (mock)</p>
+          <form onsubmit="return false;">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="acc-label">Label</label>
+                <input id="acc-label" type="text" value="Questrade Margin">
+              </div>
+              <div class="form-group">
+                <label for="acc-type">Type</label>
+                <select id="acc-type">
+                  <option>Chequing</option>
+                  <option>Investment (cash)</option>
+                  <option selected>Margin</option>
+                  <option>HELOC</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="acc-institution">Institution</label>
+                <input id="acc-institution" type="text" value="Questrade">
+              </div>
+              <div class="form-group">
+                <label for="acc-currency">Currency</label>
+                <input id="acc-currency" type="text" value="CAD" maxlength="3">
+              </div>
+              <div class="form-group">
+                <label for="acc-opening">Opening balance</label>
+                <input id="acc-opening" type="text" value="10000.00">
+              </div>
+              <div class="form-group">
+                <label for="acc-opening-date">Opening balance date</label>
+                <input id="acc-opening-date" type="date" value="2025-01-01">
+              </div>
+            </div>
+
+            <div class="banner banner-info" style="margin: 1rem 0 0;">
+              <span>Credit line details (shown when type is Margin or HELOC)</span>
+            </div>
+
+            <div class="form-grid" style="margin-top: 1rem;">
+              <div class="form-group">
+                <label for="acc-limit">Credit limit</label>
+                <input id="acc-limit" type="text" value="50000.00">
+              </div>
+              <div class="form-group">
+                <label for="acc-rate">Interest rate (%)</label>
+                <input id="acc-rate" type="text" value="7.20">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+              <button class="btn btn-primary">Save changes</button>
+              <button class="btn btn-ghost">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

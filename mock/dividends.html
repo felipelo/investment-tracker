@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dividends — Investment Tracker</title>
+  <link rel="stylesheet" href="css/identity.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">IT</div>
+        <div>
+          <div class="brand-text">Investment Tracker</div>
+          <div class="brand-sub">Local · CAD</div>
+        </div>
+      </div>
+      <nav>
+        <div class="nav-section">Overview</div>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="holdings.html" class="nav-link">Holdings</a>
+        <a href="portfolios.html" class="nav-link">Portfolios</a>
+        <div class="nav-section">Records</div>
+        <a href="transactions.html" class="nav-link">Record trade</a>
+        <a href="dividends.html" class="nav-link active">Dividends</a>
+        <a href="smith-maneuver.html" class="nav-link">Smith Maneuver</a>
+        <a href="tax-summary.html" class="nav-link">Tax summary</a>
+        <div class="nav-section">Mock</div>
+        <a href="index.html" class="nav-link">All screens</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Dividends</h1>
+          <p class="page-subtitle">Smith Maneuver Portfolio · add, edit and delete dividend income</p>
+        </div>
+        <div class="portfolio-switcher">
+          <span class="tag tag-lavender">Smith Maneuver</span>
+          <select style="font-size: 0.875rem; border: none; background: transparent; cursor: pointer;">
+            <option>Smith Maneuver Portfolio</option>
+            <option>TFSA Portfolio</option>
+            <option>RRSP Portfolio</option>
+          </select>
+        </div>
+      </header>
+
+      <div class="banner banner-info" style="max-width: 640px;">
+        Editing dividend #3. Currency defaults to the portfolio base currency (CAD).
+      </div>
+
+      <div class="card" style="max-width: 640px;">
+        <form>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Payment date</label>
+              <input type="date" value="2026-03-15">
+            </div>
+            <div class="form-group">
+              <label>Security</label>
+              <select>
+                <option>TSE:XEI — iShares CDN Select Div</option>
+                <option>TSE:BANK — BMO Equal Weight Banks</option>
+                <option>TSE:ENB — Enbridge Inc</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Gross amount</label>
+              <input type="number" value="412.50" min="0" step="0.0001">
+            </div>
+            <div class="form-group">
+              <label>Withholding tax</label>
+              <input type="number" value="0" min="0" step="0.0001">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                <input type="checkbox"> Reinvested (DRIP)
+              </label>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label>Notes</label>
+              <input type="text" value="Q1 distribution" placeholder="Optional note…">
+            </div>
+          </div>
+
+          <div class="card" style="margin-top: 1.25rem; background: var(--bg); box-shadow: none;">
+            <p class="card-title">Net amount</p>
+            <p style="margin: 0;"><strong class="mono" style="font-size: 1.125rem;">$412.50</strong>
+              <span style="color: var(--text-muted); font-size: 0.875rem;"> = gross − withholding tax</span>
+            </p>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+            <button type="button" class="btn btn-primary">Update dividend</button>
+            <button type="button" class="btn btn-ghost" style="background: var(--blush); color: var(--blush-deep);">Delete</button>
+            <button type="button" class="btn btn-ghost">Cancel edit</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top: 1.5rem;">
+        <p class="card-title">All dividends</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Security</th>
+                <th style="text-align: right;">Gross</th>
+                <th style="text-align: right;">Withholding</th>
+                <th style="text-align: right;">Net</th>
+                <th>DRIP</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">2026-06-12</td>
+                <td class="ticker">TSE:ENB</td>
+                <td class="mono" style="text-align: right;">$386.40</td>
+                <td class="mono" style="text-align: right;">$0.00</td>
+                <td class="mono" style="text-align: right;">$386.40</td>
+                <td><span class="tag tag-sage">Yes</span></td>
+                <td>Q2 distribution</td>
+              </tr>
+              <tr>
+                <td class="mono">2026-05-30</td>
+                <td class="ticker">TSE:BANK</td>
+                <td class="mono" style="text-align: right;">$248.00</td>
+                <td class="mono" style="text-align: right;">$0.00</td>
+                <td class="mono" style="text-align: right;">$248.00</td>
+                <td>—</td>
+                <td></td>
+              </tr>
+              <tr style="background: var(--bg-subtle); cursor: pointer;">
+                <td class="mono">2026-03-15</td>
+                <td class="ticker">TSE:XEI</td>
+                <td class="mono" style="text-align: right;">$412.50</td>
+                <td class="mono" style="text-align: right;">$0.00</td>
+                <td class="mono" style="text-align: right;">$412.50</td>
+                <td>—</td>
+                <td>Q1 distribution</td>
+              </tr>
+              <tr>
+                <td class="mono">2025-12-20</td>
+                <td class="ticker">VOO</td>
+                <td class="mono" style="text-align: right;">$180.00</td>
+                <td class="mono" style="text-align: right;">$27.00</td>
+                <td class="mono" style="text-align: right;">$153.00</td>
+                <td>—</td>
+                <td>US withholding 15%</td>
+              </tr>
+              <tr>
+                <td class="mono">2025-09-15</td>
+                <td class="ticker">TSE:XEI</td>
+                <td class="mono" style="text-align: right;">$398.20</td>
+                <td class="mono" style="text-align: right;">$0.00</td>
+                <td class="mono" style="text-align: right;">$398.20</td>
+                <td><span class="tag tag-sage">Yes</span></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

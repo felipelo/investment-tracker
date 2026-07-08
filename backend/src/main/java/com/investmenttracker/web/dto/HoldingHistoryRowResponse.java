@@ -20,10 +20,12 @@ public record HoldingHistoryRowResponse(
         BigDecimal shareChange,
         BigDecimal shareBalance,
         BigDecimal acbChange,
+        BigDecimal deniedLossAdjustment,
         BigDecimal totalAcb,
         BigDecimal acbPerShare,
         BigDecimal proceeds,
-        BigDecimal capitalGainLoss
+        BigDecimal capitalGainLoss,
+        boolean superficialLossFlag
 ) {
     public static HoldingHistoryRowResponse from(ComputedTransactionRow row) {
         return new HoldingHistoryRowResponse(
@@ -38,10 +40,12 @@ public record HoldingHistoryRowResponse(
                 row.shareChange(),
                 row.shareBalance(),
                 row.acbChange(),
+                row.deniedLossAdjustment(),
                 row.totalAcb(),
                 row.acbPerShare(),
                 row.proceeds(),
-                row.capitalGainLoss()
+                row.capitalGainLoss(),
+                row.superficialLossFlag()
         );
     }
 }

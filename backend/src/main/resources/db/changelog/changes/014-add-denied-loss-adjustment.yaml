@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 014-add-denied-loss-adjustment
+      author: investment-tracker
+      changes:
+        - addColumn:
+            tableName: security_transaction
+            columns:
+              - column:
+                  name: denied_loss_adjustment
+                  type: NUMERIC(18, 4)

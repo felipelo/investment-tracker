@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   useAccounts,
   useCreateTransaction,
   useDeleteTransaction,
   useSecurities,
+  useTransaction,
   useUpdateTransaction,
 } from '../api/hooks';
 import { ApiError } from '../api/client';
@@ -12,7 +14,7 @@ import type { Action, CreateSecurityTransaction, SecurityTransaction } from '../
 import { ACTIONS, actionMeta, fieldGroupFor } from '../lib/actions';
 import { usePortfolioContext } from '../context/PortfolioContext';
 import AddSecurityModal from '../components/AddSecurityModal';
-import AddAccountModal from '../components/AddAccountModal';
+import AccountFormModal from '../components/AccountFormModal';
 import RecentTransactions from '../components/RecentTransactions';
 
 function today(): string {
@@ -29,6 +31,7 @@ interface FormState {
   commission: string;
   cashAmount: string;
   splitRatio: string;
+  deniedLossAdjustment: string;
   notes: string;
 }
 
@@ -42,6 +45,7 @@ const initialState: FormState = {
   commission: '',
   cashAmount: '',
   splitRatio: '',
+  deniedLossAdjustment: '',
   notes: '',
 };
 
@@ -52,6 +56,11 @@ export default function RecordTradePage() {
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
   const deleteTransaction = useDeleteTransaction();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const editParam = searchParams.get('edit');
+  const editId = editParam !== null && /^\d+$/.test(editParam) ? Number(editParam) : null;
+  const editTransaction = useTransaction(editId);
 
   const [form, setForm] = useState<FormState>(initialState);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -89,12 +98,23 @@ export default function RecordTradePage() {
       commission: tx.commission ?? '',
       cashAmount: tx.cashAmount ?? '',
       splitRatio: tx.splitRatio ?? '',
+      deniedLossAdjustment: tx.deniedLossAdjustment ?? '',
       notes: tx.notes ?? '',
     });
     setEditingId(tx.id);
     setFieldErrors({});
     setSaved(false);
   }
+
+  useEffect(() => {
+    if (editId === null || editingId === editId || !editTransaction.data) return;
+    loadForEdit(editTransaction.data);
+    setSearchParams((params) => {
+      params.delete('edit');
+      return params;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId, editTransaction.data]);
 
   async function handleDelete() {
     if (editingId === null) return;
@@ -121,6 +141,9 @@ export default function RecordTradePage() {
       base.shares = form.shares || null;
       base.pricePerShare = form.pricePerShare || null;
       base.commission = form.commission || '0';
+      if (form.action === 'SELL') {
+        base.deniedLossAdjustment = form.deniedLossAdjustment || null;
+      }
     } else if (group === 'cash') {
       base.cashAmount = form.cashAmount || null;
     } else if (group === 'split') {
@@ -188,9 +211,10 @@ export default function RecordTradePage() {
         </div>
       )}
 
-      <div className="card" style={{ maxWidth: 640 }}>
+      <div className="card">
         <form onSubmit={handleSubmit}>
-          <div className="form-grid">
+          <div className="dividends-form-layout">
+            <div className="form-grid">
             <div className="form-group">
               <label>Date</label>
               <input
@@ -280,7 +304,8 @@ export default function RecordTradePage() {
                   <input
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="0.0001"
+                    inputMode="decimal"
                     value={form.pricePerShare}
                     onChange={(e) => update('pricePerShare', e.target.value)}
                   />
@@ -297,6 +322,20 @@ export default function RecordTradePage() {
                   />
                   <FieldError message={fieldErrors.commission} />
                 </div>
+                {form.action === 'SELL' && (
+                  <div className="form-group">
+                    <label>Denied loss adjustment</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Superficial loss add-back"
+                      value={form.deniedLossAdjustment}
+                      onChange={(e) => update('deniedLossAdjustment', e.target.value)}
+                    />
+                    <FieldError message={fieldErrors.deniedLossAdjustment} />
+                  </div>
+                )}
               </>
             )}
 
@@ -361,26 +400,30 @@ export default function RecordTradePage() {
               <FieldError message={fieldErrors.accountId} />
             </div>
 
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label>Notes</label>
-              <textarea
-                rows={2}
-                placeholder="Audit trail…"
-                value={form.notes}
-                onChange={(e) => update('notes', e.target.value)}
-              />
             </div>
-          </div>
 
-          <div
-            className="card"
-            style={{ marginTop: '1.25rem', background: 'var(--bg)', boxShadow: 'none' }}
-          >
-            <p className="card-title">Computed preview</p>
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-              ACB calculations (ACB change, total ACB, share balance, ACB/share)
-              will appear here once the backend ACB engine is implemented.
-            </p>
+            <div className="dividends-form-sidebar">
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea
+                  rows={4}
+                  placeholder="Audit trail…"
+                  value={form.notes}
+                  onChange={(e) => update('notes', e.target.value)}
+                />
+              </div>
+
+              <div
+                className="card"
+                style={{ background: 'var(--bg)', boxShadow: 'none' }}
+              >
+                <p className="card-title">Computed preview</p>
+                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                  ACB calculations (ACB change, total ACB, share balance, ACB/share)
+                  will appear here once the backend ACB engine is implemented.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
@@ -421,9 +464,7 @@ export default function RecordTradePage() {
         </form>
       </div>
 
-      <div style={{ maxWidth: 640 }}>
-        <RecentTransactions selectedId={editingId} onSelect={loadForEdit} />
-      </div>
+      <RecentTransactions selectedId={editingId} onSelect={loadForEdit} />
 
       {showAddSecurity && (
         <AddSecurityModal
@@ -433,10 +474,10 @@ export default function RecordTradePage() {
       )}
 
       {showAddAccount && activePortfolioId !== null && (
-        <AddAccountModal
+        <AccountFormModal
           portfolioId={activePortfolioId}
           onClose={() => setShowAddAccount(false)}
-          onCreated={(account) => update('accountId', String(account.id))}
+          onSaved={(account) => update('accountId', String(account.id))}
         />
       )}
     </>

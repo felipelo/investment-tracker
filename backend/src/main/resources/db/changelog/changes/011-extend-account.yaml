@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 011-extend-account
+      author: investment-tracker
+      changes:
+        - addColumn:
+            tableName: account
+            columns:
+              - column:
+                  name: institution
+                  type: VARCHAR(128)
+              - column:
+                  name: opening_balance
+                  type: NUMERIC(19, 4)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: opening_balance_date
+                  type: DATE
+              - column:
+                  name: credit_limit
+                  type: NUMERIC(19, 4)
+              - column:
+                  name: interest_rate
+                  type: NUMERIC(9, 6)

@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 015-add-dividend-account
+      author: investment-tracker
+      changes:
+        - addColumn:
+            tableName: dividend
+            columns:
+              - column:
+                  name: account_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_dividend_account
+                    references: account(id)
