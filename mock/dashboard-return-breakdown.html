@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Return breakdown options — Investment Tracker</title>
+  <link rel="stylesheet" href="css/identity.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">IT</div>
+        <div>
+          <div class="brand-text">Investment Tracker</div>
+          <div class="brand-sub">Local · CAD</div>
+        </div>
+      </div>
+      <nav>
+        <div class="nav-section">Overview</div>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="dashboard-return-breakdown.html" class="nav-link active">Return breakdown</a>
+        <a href="holdings.html" class="nav-link">Holdings</a>
+        <a href="portfolios.html" class="nav-link">Portfolios</a>
+        <div class="nav-section">Records</div>
+        <a href="transactions.html" class="nav-link">Record trade</a>
+        <a href="smith-maneuver.html" class="nav-link">Smith Maneuver</a>
+        <a href="tax-summary.html" class="nav-link">Tax summary</a>
+        <div class="nav-section">Mock</div>
+        <a href="index.html" class="nav-link">All screens</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Return breakdown — options</h1>
+          <p class="page-subtitle">
+            Splitting the return into stock/ETF (price) return, dividend return, and total.
+            Sample data: Price +$15,400 · Dividends +$2,840 · Total +$18,240 on $124,140 invested.
+          </p>
+        </div>
+      </header>
+
+      <div class="banner banner-info" style="margin-bottom: 1.5rem;">
+        Today the dashboard shows a single <strong>All-time return</strong> of +$18,240 that already
+        bundles price change and dividends together. These four options surface that split. Pick one
+        and I'll wire it to the real backend (price = market value − invested, dividends = net dividends).
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- CHOSEN — Option A blended into the full dashboard             -->
+      <!-- ============================================================= -->
+      <section style="margin-bottom: 2.5rem;">
+        <h2 class="option-heading">
+          Chosen · Option A blended into the dashboard <span class="tag tag-lavender">preview</span>
+        </h2>
+        <p class="option-note">
+          The price / dividend / total split from Option A applied across the whole returns section:
+          the hero cards stay for the at-a-glance headline, and the period returns row (5 Days →
+          All-time) becomes a matrix where every period is broken into price, dividends, and total.
+        </p>
+
+        <!-- Hero stats (unchanged from today's dashboard) -->
+        <div class="grid-3" style="margin-bottom: 1.25rem;">
+          <div class="card">
+            <p class="card-title">Portfolio value</p>
+            <p class="card-value">$142,380</p>
+            <p class="card-meta">Manual prices · Jun 9</p>
+          </div>
+          <div class="card">
+            <p class="card-title">Today's return</p>
+            <p class="card-value positive">+$842 <span style="font-size: 1rem;">(+0.59%)</span></p>
+            <p class="card-meta">vs snapshot Jun 8</p>
+          </div>
+          <div class="card">
+            <p class="card-title">All-time return</p>
+            <p class="card-value positive">+$18,240 <span style="font-size: 1rem;">(+14.7%)</span></p>
+            <p class="card-meta">Price +$15,400 · Dividends +$2,840</p>
+          </div>
+        </div>
+
+        <!-- Return breakdown matrix (replaces the plain period-returns card) -->
+        <div class="card">
+          <p class="card-title">Returns — price vs dividends</p>
+          <div class="table-wrap">
+            <table class="breakdown-matrix">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th class="num">5 Days</th>
+                  <th class="num">One Month</th>
+                  <th class="num">Six Months</th>
+                  <th class="num">One Year</th>
+                  <th class="num col-alltime">All-time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="row-label"><span class="legend-dot" style="background: var(--sage);"></span> Price return</td>
+                  <td class="num mono positive">+$1,180</td>
+                  <td class="num mono positive">+$3,620</td>
+                  <td class="num mono positive">+$7,700</td>
+                  <td class="num mono positive">+$13,120</td>
+                  <td class="num mono positive col-alltime">+$15,400</td>
+                </tr>
+                <tr>
+                  <td class="row-label"><span class="legend-dot" style="background: var(--lavender);"></span> Dividend return</td>
+                  <td class="num mono positive">+$24</td>
+                  <td class="num mono positive">+$270</td>
+                  <td class="num mono positive">+$1,420</td>
+                  <td class="num mono positive">+$2,560</td>
+                  <td class="num mono positive col-alltime">+$2,840</td>
+                </tr>
+                <tr class="row-total">
+                  <td class="row-label">Total return</td>
+                  <td class="num mono positive">+$1,204<span class="cell-pct">+0.85%</span></td>
+                  <td class="num mono positive">+$3,890<span class="cell-pct">+2.81%</span></td>
+                  <td class="num mono positive">+$9,120<span class="cell-pct">+6.85%</span></td>
+                  <td class="num mono positive">+$15,680<span class="cell-pct">+12.4%</span></td>
+                  <td class="num mono positive col-alltime">+$18,240<span class="cell-pct">+14.7%</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <div class="banner banner-info" style="margin-bottom: 1.5rem;">
+        Below are the original four standalone options for reference.
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- OPTION A — Three-stat breakdown card (all-time)               -->
+      <!-- ============================================================= -->
+      <section style="margin-bottom: 2rem;">
+        <h2 class="option-heading">Option A · Three-stat breakdown card</h2>
+        <p class="option-note">
+          Smallest lift. Replaces the single "All-time return" hero card with three figures side by
+          side. No new backend data — both numbers already exist, they're just added together today.
+        </p>
+        <div class="card">
+          <p class="card-title">All-time return breakdown</p>
+          <div class="grid-3">
+            <div class="breakdown-stat" style="border-top: 3px solid var(--sage);">
+              <div class="breakdown-label">Price return</div>
+              <div class="card-value card-value-sm positive">+$15,400</div>
+              <div class="card-meta">+12.4% · market value − invested</div>
+            </div>
+            <div class="breakdown-stat" style="border-top: 3px solid var(--lavender);">
+              <div class="breakdown-label">Dividend return</div>
+              <div class="card-value card-value-sm positive">+$2,840</div>
+              <div class="card-meta">+2.3% · net dividends received</div>
+            </div>
+            <div class="breakdown-stat" style="border-top: 3px solid var(--peach);">
+              <div class="breakdown-label">Total return</div>
+              <div class="card-value card-value-sm positive">+$18,240</div>
+              <div class="card-meta">+14.7% · price + dividends</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================= -->
+      <!-- OPTION B — Horizontal stacked composition bar (all-time)      -->
+      <!-- ============================================================= -->
+      <section style="margin-bottom: 2rem;">
+        <h2 class="option-heading">Option B · Stacked composition bar</h2>
+        <p class="option-note">
+          Keeps one big "Total return" headline and adds a single stacked bar showing how much of the
+          total came from price vs dividends. Good at a glance for "how much of my gain is income?".
+        </p>
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem;">
+            <p class="card-title" style="margin: 0;">Total return</p>
+            <p class="card-value positive" style="margin: 0;">+$18,240 <span style="font-size: 1rem;">(+14.7%)</span></p>
+          </div>
+          <div class="stack-bar" role="img" aria-label="Price 84%, dividends 16%">
+            <div class="stack-seg" style="width: 84.4%; background: var(--sage-deep);">84%</div>
+            <div class="stack-seg" style="width: 15.6%; background: var(--lavender-deep);">16%</div>
+          </div>
+          <div class="stack-legend">
+            <span><span class="legend-dot" style="background: var(--sage-deep);"></span> Price return · +$15,400</span>
+            <span><span class="legend-dot" style="background: var(--lavender-deep);"></span> Dividend return · +$2,840</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================= -->
+      <!-- OPTION C — Waterfall (all-time)                               -->
+      <!-- ============================================================= -->
+      <section style="margin-bottom: 2rem;">
+        <h2 class="option-heading">Option C · Waterfall</h2>
+        <p class="option-note">
+          Shows how each piece builds the current value: Invested → + price gain → + dividends →
+          Portfolio value. Most explanatory, a little more chart code. No new backend data.
+        </p>
+        <div class="card">
+          <p class="card-title">How your value was built</p>
+          <svg viewBox="0 0 560 240" width="100%" style="display:block; height:auto; max-width:560px;" aria-label="Return waterfall">
+            <!-- baseline -->
+            <line x1="40" y1="200" x2="540" y2="200" stroke="var(--border-strong)" stroke-width="1"/>
+
+            <!-- Invested: full bar from 0 to 124,140 (scale: 200px = 145k, base y=200, top y=28) -->
+            <!-- scale factor: 172px height for 145000 -> ~0.001186 px per $ -->
+            <rect x="60"  y="53"  width="80" height="147" rx="3" fill="var(--sky)"/>
+            <text x="100" y="45"  class="wf-val">$124,140</text>
+            <text x="100" y="218" class="wf-lbl">Invested</text>
+
+            <!-- + Price gain: floats on top of invested (from 124,140 to 139,540) -->
+            <rect x="180" y="35"  width="80" height="18" rx="3" fill="var(--sage-deep)"/>
+            <line x1="140" y1="53" x2="180" y2="53" stroke="var(--text-faint)" stroke-width="1" stroke-dasharray="3 3"/>
+            <text x="220" y="27"  class="wf-val positive">+$15,400</text>
+            <text x="220" y="218" class="wf-lbl">Price gain</text>
+
+            <!-- + Dividends: floats on top (from 139,540 to 142,380) -->
+            <rect x="300" y="31"  width="80" height="4"  rx="2" fill="var(--lavender-deep)"/>
+            <line x1="260" y1="35" x2="300" y2="35" stroke="var(--text-faint)" stroke-width="1" stroke-dasharray="3 3"/>
+            <text x="340" y="24"  class="wf-val positive">+$2,840</text>
+            <text x="340" y="218" class="wf-lbl">Dividends</text>
+
+            <!-- Portfolio value: full bar to 142,380 -->
+            <rect x="420" y="31"  width="80" height="169" rx="3" fill="var(--peach-deep)"/>
+            <line x1="380" y1="31" x2="420" y2="31" stroke="var(--text-faint)" stroke-width="1" stroke-dasharray="3 3"/>
+            <text x="460" y="23"  class="wf-val">$142,380</text>
+            <text x="460" y="218" class="wf-lbl">Value</text>
+          </svg>
+          <div class="stack-legend" style="margin-top: 0.75rem;">
+            <span><span class="legend-dot" style="background: var(--sky);"></span> Invested</span>
+            <span><span class="legend-dot" style="background: var(--sage-deep);"></span> Price gain</span>
+            <span><span class="legend-dot" style="background: var(--lavender-deep);"></span> Dividends</span>
+            <span><span class="legend-dot" style="background: var(--peach-deep);"></span> Current value</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================= -->
+      <!-- OPTION D — Over-time stacked bars (needs backend work)        -->
+      <!-- ============================================================= -->
+      <section style="margin-bottom: 1rem;">
+        <h2 class="option-heading">Option D · Over-time stacked bars <span class="tag tag-butter">needs backend work</span></h2>
+        <p class="option-note">
+          Per-year stacked bars: price contribution vs dividend contribution, with a running total
+          line. This is the only option that needs a <strong>new backend series</strong> (yearly price
+          + dividend history), so it's the larger lift.
+        </p>
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <p class="card-title" style="margin: 0;">Return by year</p>
+            <div class="stack-legend" style="margin: 0;">
+              <span><span class="legend-dot" style="background: var(--sage);"></span> Price</span>
+              <span><span class="legend-dot" style="background: var(--lavender);"></span> Dividends</span>
+              <span><span class="legend-dot" style="background: var(--lavender-deep);"></span> Cumulative</span>
+            </div>
+          </div>
+          <svg viewBox="0 0 560 200" width="100%" style="display:block; height:auto; max-width:560px;" aria-label="Return by year">
+            <line x1="40" y1="160" x2="540" y2="160" stroke="var(--border-strong)" stroke-width="1"/>
+
+            <!-- 2022: price 2100, div 600 -->
+            <rect x="70"  y="118" width="52" height="30" rx="3" fill="var(--lavender)"/>
+            <rect x="70"  y="88"  width="52" height="30" rx="3" fill="var(--sage)"/>
+            <text x="96"  y="176" class="wf-lbl">2022</text>
+
+            <!-- 2023: price 3800, div 720 -->
+            <rect x="182" y="107" width="52" height="41" rx="3" fill="var(--lavender)"/>
+            <rect x="182" y="53"  width="52" height="54" rx="3" fill="var(--sage)"/>
+            <text x="208" y="176" class="wf-lbl">2023</text>
+
+            <!-- 2024: price 4500, div 760 -->
+            <rect x="294" y="104" width="52" height="44" rx="3" fill="var(--lavender)"/>
+            <rect x="294" y="40"  width="52" height="64" rx="3" fill="var(--sage)"/>
+            <text x="320" y="176" class="wf-lbl">2024</text>
+
+            <!-- 2025: price 5000, div 760 (YTD partial look) -->
+            <rect x="406" y="102" width="52" height="46" rx="3" fill="var(--lavender)"/>
+            <rect x="406" y="30"  width="52" height="72" rx="3" fill="var(--sage)"/>
+            <text x="432" y="176" class="wf-lbl">2025</text>
+
+            <!-- cumulative line across bar centers -->
+            <polyline points="96,140 208,120 320,96 432,72"
+              fill="none" stroke="var(--lavender-deep)" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="96"  cy="140" r="3" fill="var(--lavender-deep)"/>
+            <circle cx="208" cy="120" r="3" fill="var(--lavender-deep)"/>
+            <circle cx="320" cy="96"  r="3" fill="var(--lavender-deep)"/>
+            <circle cx="432" cy="72"  r="3" fill="var(--lavender-deep)"/>
+          </svg>
+          <p class="card-meta" style="margin-top: 0.75rem;">
+            Placeholder yearly data. Real series would come from a new endpoint aggregating price change
+            and dividends per period.
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <style>
+    .option-heading {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin: 0 0 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .option-note {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin: 0 0 0.875rem;
+      max-width: 62ch;
+    }
+    .breakdown-stat {
+      padding: 0.875rem 0 0;
+    }
+    .breakdown-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 0.375rem;
+    }
+    .stack-bar {
+      display: flex;
+      height: 32px;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 0.875rem;
+    }
+    .stack-seg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .stack-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .stack-legend .legend-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+    .wf-val { font-size: 10px; font-weight: 600; fill: var(--text); text-anchor: middle; font-family: 'DM Sans', sans-serif; }
+    .wf-lbl { font-size: 10px; fill: var(--text-muted); text-anchor: middle; font-family: 'DM Sans', sans-serif; }
+    .wf-val.positive { fill: var(--gain); }
+
+    .breakdown-matrix th.num,
+    .breakdown-matrix td.num { text-align: right; }
+    .breakdown-matrix .row-label {
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .breakdown-matrix .row-label .legend-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    .breakdown-matrix .col-alltime {
+      background: var(--bg);
+      border-left: 2px solid var(--border-strong);
+      font-weight: 600;
+    }
+    .breakdown-matrix .row-total td {
+      font-weight: 700;
+      border-top: 1px solid var(--border-strong);
+    }
+    .breakdown-matrix .cell-pct {
+      display: block;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-top: 0.125rem;
+    }
+  </style>
+</body>
+</html>

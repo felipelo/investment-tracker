@@ -102,6 +102,66 @@ public class HoldingService {
         return new PortfolioMetrics(invested, marketValue, returnAmount, returnPct, holdingsCount);
     }
 
+    /**
+     * Portfolio market value as of {@code asOf}: sum over held securities of
+     * (share balance from transactions dated on/before {@code asOf}) x (nearest price on/before {@code asOf}).
+     * Returns {@code null} when no holdings are priced at that date, so callers can treat it as unavailable.
+     */
+    public BigDecimal portfolioValueAsOf(Long portfolioId, java.time.LocalDate asOf) {
+        var values = holdingValuesAsOf(portfolioId, asOf);
+        if (values == null) {
+            return null;
+        }
+        BigDecimal total = null;
+        for (var value : values.values()) {
+            total = total == null ? value : total.add(value);
+        }
+        return total;
+    }
+
+    /**
+     * Per-security market value as of {@code asOf} (share balance from transactions on/before {@code asOf}
+     * x nearest price on/before {@code asOf}). Returns {@code null} when any held security is unpriced at
+     * that date, so callers can treat the whole portfolio as unavailable, matching {@link #portfolioValueAsOf}.
+     */
+    public java.util.Map<Long, BigDecimal> holdingValuesAsOf(Long portfolioId, java.time.LocalDate asOf) {
+        var transactions = securityTransactionRepository.findAllForHoldingsByPortfolio(portfolioId);
+        if (transactions.isEmpty()) {
+            return null;
+        }
+
+        var priceBySecurity = priceSnapshotRepository.findLatestPerSecurityAsOf(asOf).stream()
+                .collect(Collectors.toMap(
+                        snapshot -> snapshot.getSecurity().getId(),
+                        Function.identity()
+                ));
+
+        var values = new java.util.LinkedHashMap<Long, BigDecimal>();
+        for (var securityTransactions : groupBySecurity(transactions).values()) {
+            var asOfInputs = securityTransactions.stream()
+                    .filter(transaction -> !transaction.getDate().isAfter(asOf))
+                    .map(SecurityTransactionInputs::from)
+                    .toList();
+            if (asOfInputs.isEmpty()) {
+                continue;
+            }
+            var summary = AcbEngine.summarize(asOfInputs);
+            if (summary.shareBalance().compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+            var securityId = securityTransactions.getFirst().getSecurity().getId();
+            PriceSnapshot price = priceBySecurity.get(securityId);
+            if (price == null) {
+                return null;
+            }
+            BigDecimal value = summary.shareBalance()
+                    .multiply(price.getPrice())
+                    .setScale(4, RoundingMode.HALF_UP);
+            values.put(securityId, value);
+        }
+        return values;
+    }
+
     public List<HoldingHistoryRowResponse> getHistory(Long portfolioId, Long securityId) {
         if (!securityRepository.existsById(securityId)) {
             throw new NotFoundException("Security", securityId);

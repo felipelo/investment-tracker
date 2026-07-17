@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './components/AppShell';
-import PlaceholderPage from './pages/PlaceholderPage';
 import RecordTradePage from './pages/RecordTradePage';
 import HoldingsPage from './pages/HoldingsPage';
 import PortfoliosPage from './pages/PortfoliosPage';
@@ -9,6 +8,7 @@ import DashboardPage from './pages/DashboardPage';
 import DividendsPage from './pages/DividendsPage';
 import CashTransactionsPage from './pages/CashTransactionsPage';
 import SmithManeuverPage from './pages/SmithManeuverPage';
+import TaxSummaryPage from './pages/TaxSummaryPage';
 
 export default function App() {
   return (
@@ -23,12 +23,7 @@ export default function App() {
         <Route path="/portfolios" element={<PortfoliosPage />} />
         <Route path="/accounts" element={<AccountsPage />} />
         <Route path="/smith-maneuver" element={<SmithManeuverPage />} />
-        <Route
-          path="/tax-summary"
-          element={
-            <PlaceholderPage title="Tax summary" subtitle="Tax year export view" />
-          }
-        />
+        <Route path="/tax-summary" element={<TaxSummaryPage />} />
         <Route path="*" element={<Navigate to="/record-trade" replace />} />
       </Routes>
     </AppShell>

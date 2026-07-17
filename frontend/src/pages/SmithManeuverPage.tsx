@@ -8,18 +8,6 @@ import FlowChain from '../components/FlowChain';
 import HelocAccountsTable from '../components/HelocAccountsTable';
 import FlowFormModal from '../components/FlowFormModal';
 
-const TYPE_TAG: Record<string, string> = {
-  Taxable: 'tag-peach',
-  TFSA: 'tag-sky',
-  RRSP: 'tag-butter',
-  'Smith Maneuver': 'tag-lavender',
-  Other: 'tag-sage',
-};
-
-function typeTagClass(type: string | null): string {
-  return (type && TYPE_TAG[type]) || 'tag-sage';
-}
-
 function monthLabel(date: string): string {
   const parsed = new Date(`${date}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) return date;
@@ -27,8 +15,7 @@ function monthLabel(date: string): string {
 }
 
 export default function SmithManeuverPage() {
-  const { portfolios, activePortfolioId, activePortfolio, setActivePortfolioId } =
-    usePortfolioContext();
+  const { activePortfolioId, activePortfolio } = usePortfolioContext();
   const smithManeuver = useSmithManeuver(activePortfolioId);
 
   const [showModal, setShowModal] = useState(false);
@@ -59,30 +46,6 @@ export default function SmithManeuverPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          {activePortfolio && (
-            <div className="portfolio-switcher">
-              <span className={`tag ${typeTagClass(activePortfolio.type)}`}>
-                {activePortfolio.type ?? 'Other'}
-              </span>
-              <select
-                value={activePortfolioId ?? ''}
-                onChange={(e) => setActivePortfolioId(Number(e.target.value))}
-                style={{
-                  fontFamily: 'var(--font)',
-                  fontSize: '0.875rem',
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                }}
-              >
-                {portfolios.map((portfolio) => (
-                  <option key={portfolio.id} value={portfolio.id}>
-                    {portfolio.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
           {activePortfolioId !== null && (
             <button type="button" className="btn btn-primary" onClick={openNew}>
               New flow

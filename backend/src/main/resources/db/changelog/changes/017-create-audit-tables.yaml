@@ -1,0 +1,204 @@
+databaseChangeLog:
+  - changeSet:
+      id: 017-create-revinfo
+      author: investment-tracker
+      changes:
+        - createTable:
+            tableName: revinfo
+            columns:
+              - column:
+                  name: rev
+                  type: INTEGER
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_revinfo
+              - column:
+                  name: revtstmp
+                  type: BIGINT
+  - changeSet:
+      id: 017-create-security-transaction-aud
+      author: investment-tracker
+      changes:
+        - createTable:
+            tableName: security_transaction_aud
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  name: txn_date
+                  type: DATE
+              - column:
+                  name: security_id
+                  type: BIGINT
+              - column:
+                  name: account_id
+                  type: BIGINT
+              - column:
+                  name: action
+                  type: VARCHAR(24)
+              - column:
+                  name: shares
+                  type: NUMERIC(18,6)
+              - column:
+                  name: price_per_share
+                  type: NUMERIC(18,4)
+              - column:
+                  name: commission
+                  type: NUMERIC(18,4)
+              - column:
+                  name: cash_amount
+                  type: NUMERIC(18,4)
+              - column:
+                  name: split_ratio
+                  type: NUMERIC(18,6)
+              - column:
+                  name: denied_loss_adjustment
+                  type: NUMERIC(18,4)
+              - column:
+                  name: notes
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+        - addPrimaryKey:
+            tableName: security_transaction_aud
+            columnNames: id, rev
+            constraintName: pk_security_transaction_aud
+        - addForeignKeyConstraint:
+            baseTableName: security_transaction_aud
+            baseColumnNames: rev
+            referencedTableName: revinfo
+            referencedColumnNames: rev
+            constraintName: fk_sectxn_aud_revinfo
+  - changeSet:
+      id: 017-create-cash-transaction-aud
+      author: investment-tracker
+      changes:
+        - createTable:
+            tableName: cash_transaction_aud
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  name: account_id
+                  type: BIGINT
+              - column:
+                  name: counterparty_account_id
+                  type: BIGINT
+              - column:
+                  name: type
+                  type: VARCHAR(24)
+              - column:
+                  name: tx_date
+                  type: DATE
+              - column:
+                  name: amount
+                  type: NUMERIC(18,4)
+              - column:
+                  name: purpose
+                  type: VARCHAR(16)
+              - column:
+                  name: transfer_group_id
+                  type: VARCHAR(36)
+              - column:
+                  name: notes
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+        - addPrimaryKey:
+            tableName: cash_transaction_aud
+            columnNames: id, rev
+            constraintName: pk_cash_transaction_aud
+        - addForeignKeyConstraint:
+            baseTableName: cash_transaction_aud
+            baseColumnNames: rev
+            referencedTableName: revinfo
+            referencedColumnNames: rev
+            constraintName: fk_cashtxn_aud_revinfo
+  - changeSet:
+      id: 017-create-dividend-aud
+      author: investment-tracker
+      changes:
+        - createTable:
+            tableName: dividend_aud
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  name: portfolio_id
+                  type: BIGINT
+              - column:
+                  name: security_id
+                  type: BIGINT
+              - column:
+                  name: account_id
+                  type: BIGINT
+              - column:
+                  name: reinvestment_transaction_id
+                  type: BIGINT
+              - column:
+                  name: payment_date
+                  type: DATE
+              - column:
+                  name: gross_amount
+                  type: NUMERIC(18,4)
+              - column:
+                  name: withholding_tax
+                  type: NUMERIC(18,4)
+              - column:
+                  name: currency
+                  type: CHAR(3)
+              - column:
+                  name: drip
+                  type: BOOLEAN
+              - column:
+                  name: notes
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+        - addPrimaryKey:
+            tableName: dividend_aud
+            columnNames: id, rev
+            constraintName: pk_dividend_aud
+        - addForeignKeyConstraint:
+            baseTableName: dividend_aud
+            baseColumnNames: rev
+            referencedTableName: revinfo
+            referencedColumnNames: rev
+            constraintName: fk_dividend_aud_revinfo

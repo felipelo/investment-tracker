@@ -19,6 +19,7 @@
       <nav>
         <div class="nav-section">Overview</div>
         <a href="dashboard.html" class="nav-link active">Dashboard</a>
+        <a href="dashboard-return-breakdown.html" class="nav-link">Return breakdown</a>
         <a href="holdings.html" class="nav-link">Holdings</a>
         <a href="portfolios.html" class="nav-link">Portfolios</a>
         <div class="nav-section">Records</div>
@@ -126,27 +127,34 @@
               <option>2025</option>
             </select>
           </div>
-          <svg viewBox="0 0 400 140" width="100%" height="140" aria-label="Monthly dividends">
+          <svg viewBox="0 0 400 150" width="100%" height="150" aria-label="Monthly dividends">
             <!-- bars -->
-            <rect x="20" y="80" width="24" height="50" rx="3" fill="var(--sage)"/>
-            <rect x="52" y="65" width="24" height="65" rx="3" fill="var(--sage)"/>
-            <rect x="84" y="70" width="24" height="60" rx="3" fill="var(--sage)"/>
-            <rect x="116" y="55" width="24" height="75" rx="3" fill="var(--sage)"/>
-            <rect x="148" y="60" width="24" height="70" rx="3" fill="var(--sage)"/>
-            <rect x="180" y="45" width="24" height="85" rx="3" fill="var(--sage-deep)"/>
-            <rect x="212" y="90" width="24" height="40" rx="3" fill="var(--bg-subtle)" opacity="0.6"/>
+            <rect x="20" y="85" width="24" height="50" rx="3" fill="var(--sage)"/>
+            <rect x="52" y="70" width="24" height="65" rx="3" fill="var(--sage)"/>
+            <rect x="84" y="75" width="24" height="60" rx="3" fill="var(--sage)"/>
+            <rect x="116" y="60" width="24" height="75" rx="3" fill="var(--sage)"/>
+            <rect x="148" y="65" width="24" height="70" rx="3" fill="var(--sage)"/>
+            <rect x="180" y="50" width="24" height="85" rx="3" fill="var(--sage-deep)"/>
+            <rect x="212" y="95" width="24" height="40" rx="3" fill="var(--bg-subtle)" opacity="0.6"/>
+            <!-- bar values -->
+            <text x="32" y="78" font-size="8" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">$350</text>
+            <text x="64" y="63" font-size="8" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">$455</text>
+            <text x="96" y="68" font-size="8" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">$420</text>
+            <text x="128" y="53" font-size="8" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">$525</text>
+            <text x="160" y="58" font-size="8" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">$490</text>
+            <text x="192" y="43" font-size="8" fill="var(--text)" text-anchor="middle" font-weight="600" font-family="DM Sans">$600</text>
             <!-- cumulative line -->
-            <polyline points="32,115 64,100 96,95 128,85 160,80 192,70 224,65"
+            <polyline points="32,120 64,105 96,100 128,90 160,85 192,75 224,70"
               fill="none" stroke="var(--lavender-deep)" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="192" cy="70" r="4" fill="var(--lavender-deep)"/>
-            <!-- labels -->
-            <text x="32" y="138" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">J</text>
-            <text x="64" y="138" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">F</text>
-            <text x="96" y="138" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">M</text>
-            <text x="128" y="138" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">A</text>
-            <text x="160" y="138" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">M</text>
-            <text x="192" y="138" font-size="9" fill="var(--text)" text-anchor="middle" font-weight="600" font-family="DM Sans">J</text>
-            <text x="224" y="138" font-size="9" fill="var(--text-faint)" text-anchor="middle" font-family="DM Sans">J</text>
+            <circle cx="192" cy="75" r="4" fill="var(--lavender-deep)"/>
+            <!-- month labels -->
+            <text x="32" y="148" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">J</text>
+            <text x="64" y="148" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">F</text>
+            <text x="96" y="148" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">M</text>
+            <text x="128" y="148" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">A</text>
+            <text x="160" y="148" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">M</text>
+            <text x="192" y="148" font-size="9" fill="var(--text)" text-anchor="middle" font-weight="600" font-family="DM Sans">J</text>
+            <text x="224" y="148" font-size="9" fill="var(--text-faint)" text-anchor="middle" font-family="DM Sans">J</text>
           </svg>
           <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
             <span><span style="display:inline-block;width:10px;height:10px;background:var(--sage);border-radius:2px;vertical-align:middle;margin-right:4px;"></span> Monthly</span>
@@ -155,7 +163,86 @@
           </div>
         </div>
       </div>
+
+      <!-- Return breakdown matrix -->
+      <div class="card" style="margin-top: 1.25rem;">
+        <p class="card-title">Returns — price vs dividends</p>
+        <div class="table-wrap">
+          <table class="breakdown-matrix">
+            <thead>
+              <tr>
+                <th></th>
+                <th class="num">5 Days</th>
+                <th class="num">One Month</th>
+                <th class="num">Six Months</th>
+                <th class="num">One Year</th>
+                <th class="num col-alltime">All-time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="row-label"><span class="legend-dot" style="background: var(--sage);"></span> Price return</td>
+                <td class="num mono positive">+$1,180</td>
+                <td class="num mono positive">+$3,620</td>
+                <td class="num mono positive">+$7,700</td>
+                <td class="num mono positive">+$13,120</td>
+                <td class="num mono positive col-alltime">+$15,400</td>
+              </tr>
+              <tr>
+                <td class="row-label"><span class="legend-dot" style="background: var(--lavender);"></span> Dividend return</td>
+                <td class="num mono positive">+$24</td>
+                <td class="num mono positive">+$270</td>
+                <td class="num mono positive">+$1,420</td>
+                <td class="num mono positive">+$2,560</td>
+                <td class="num mono positive col-alltime">+$2,840</td>
+              </tr>
+              <tr class="row-total">
+                <td class="row-label">Total return</td>
+                <td class="num mono positive">+$1,204<span class="cell-pct">+0.85%</span></td>
+                <td class="num mono positive">+$3,890<span class="cell-pct">+2.81%</span></td>
+                <td class="num mono positive">+$9,120<span class="cell-pct">+6.85%</span></td>
+                <td class="num mono positive">+$15,680<span class="cell-pct">+12.4%</span></td>
+                <td class="num mono positive col-alltime">+$18,240<span class="cell-pct">+14.7%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </main>
   </div>
+
+  <style>
+    .breakdown-matrix th.num,
+    .breakdown-matrix td.num { text-align: right; }
+    .breakdown-matrix .row-label {
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .breakdown-matrix .row-label .legend-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    .breakdown-matrix .col-alltime {
+      background: var(--bg);
+      border-left: 2px solid var(--border-strong);
+      font-weight: 600;
+    }
+    .breakdown-matrix .row-total td {
+      font-weight: 700;
+      border-top: 1px solid var(--border-strong);
+    }
+    .breakdown-matrix .cell-pct {
+      display: block;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-top: 0.125rem;
+    }
+  </style>
 </body>
 </html>

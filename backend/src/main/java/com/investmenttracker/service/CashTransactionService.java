@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -89,8 +90,9 @@ public class CashTransactionService {
             BigDecimal cumulativeNet = BigDecimal.ZERO;
             for (var entry : accountEntries) {
                 cumulativeNet = cumulativeNet.add(entry.amount());
-                entry.balanceAfter =
-                        AccountService.deriveBalance(account.getType(), account.getOpeningBalance(), cumulativeNet);
+                entry.balanceAfter = AccountService
+                        .deriveBalance(account.getType(), account.getOpeningBalance(), cumulativeNet)
+                        .setScale(2, RoundingMode.HALF_UP);
             }
         }
 

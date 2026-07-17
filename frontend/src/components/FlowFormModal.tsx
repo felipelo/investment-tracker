@@ -31,7 +31,7 @@ export default function FlowFormModal({ portfolioId, flow, onClose }: FlowFormMo
   const isEdit = flow != null;
   const accounts = useAccounts(portfolioId);
   const cashTransactions = useCashTransactions(portfolioId);
-  const securityTransactions = useTransactions();
+  const securityTransactions = useTransactions({ portfolioId });
   const securities = useSecurities();
   const createFlow = useCreateFlow();
   const updateFlow = useUpdateFlow();

@@ -29,12 +29,19 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [activePortfolioId, setActiveId] = useState<number | null>(() => readStoredId());
 
   useEffect(() => {
-    if (portfolios.length === 0) return;
+    if (!portfoliosQuery.isSuccess) return;
+    if (portfolios.length === 0) {
+      setActiveId(null);
+      localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
     const stillExists = activePortfolioId !== null && portfolios.some((p) => p.id === activePortfolioId);
     if (!stillExists) {
-      setActiveId(portfolios[0].id);
+      const fallbackId = portfolios[0].id;
+      setActiveId(fallbackId);
+      localStorage.setItem(STORAGE_KEY, String(fallbackId));
     }
-  }, [portfolios, activePortfolioId]);
+  }, [portfoliosQuery.isSuccess, portfolios, activePortfolioId]);
 
   function setActivePortfolioId(id: number) {
     setActiveId(id);

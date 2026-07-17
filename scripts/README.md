@@ -1,6 +1,6 @@
-# Portfolio snapshot backfill
+# Price snapshot backfill
 
-One-time script that fetches historical daily closing prices via [yfinance](https://pypi.org/project/yfinance/), reconstructs each portfolio's whole-portfolio market value for every business day since the first purchase, and upserts into `portfolio_snapshot`. This populates the dashboard period returns (5 Days / One Month / Six Month / One Year).
+One-time script that fetches historical daily closing prices via [yfinance](https://pypi.org/project/yfinance/) and upserts one row per (security, trading day) into `price_snapshot`. Portfolio value and the dashboard period returns (5 Days / One Month / Six Month / One Year) are computed live from these prices plus the transaction history, so a dense `price_snapshot` is what makes those returns work.
 
 ## Setup
 
@@ -16,22 +16,22 @@ Ensure Postgres is running (e.g. `docker compose -f backend/docker-compose.yml u
 ## Usage
 
 ```bash
-# Preview all portfolios (no writes)
-python backfill_portfolio_snapshots.py --dry-run
+# Preview all held securities (no writes)
+python backfill_price_snapshots.py --dry-run
 
-# Backfill one portfolio, capped at 365 days
-python backfill_portfolio_snapshots.py --portfolio-id 1 --days 365
+# Backfill securities in one portfolio, capped at 365 days
+python backfill_price_snapshots.py --portfolio-id 1 --days 365
 
-# Backfill all portfolios from first transaction date to today
-python backfill_portfolio_snapshots.py
+# Backfill all held securities from first transaction date to today
+python backfill_price_snapshots.py
 ```
 
 ### Options
 
 | Flag | Description |
 |------|-------------|
-| `--portfolio-id <id>` | Process a single portfolio (default: all) |
-| `--days <N>` | Cap lookback to N days; start = `max(firstBuyDate, today - N)` |
+| `--portfolio-id <id>` | Only backfill securities held in this portfolio (default: all held securities) |
+| `--days <N>` | Cap lookback to N days; start = `max(firstTxnDate, today - N)` |
 | `--dry-run` | Compute and print summary; no database writes |
 
 ### Environment
@@ -48,19 +48,19 @@ Reads Postgres connection from env (defaults match `backend/docker-compose.yml`)
 
 ## How it works
 
-For each portfolio and each business day D:
+For each held security, fetch its unadjusted daily `Close` from its first transaction date to today and upsert each close:
 
 ```
-value(D) = Σ shareBalance_as_of(D) × closingPrice_on(D)
+price_snapshot(security_id, snapshot_date, price) = Close_on(snapshot_date)
 ```
 
-- Share balances are replayed from `security_transaction` (BUY +, SELL −, SPLIT × ratio).
 - Prices are fetched from yfinance using unadjusted `Close` (not `Adj Close`), because splits are already modeled via SPLIT transactions.
-- Results are upserted into `portfolio_snapshot` on `(portfolio_id, snapshot_date)`.
+- Results are upserted into `price_snapshot` on `(security_id, snapshot_date)`.
+- The dashboard then computes value as of any date D as `Σ shareBalance_as_of(D) × nearestClose_on_or_before(D)`.
 
 ## Caveats
 
-- **No FX conversion**: The app sums `price × shares` across currencies directly. The script mirrors this so historical values are comparable to the current dashboard value. Mixed USD/CAD portfolios will have values that are not currency-normalized.
+- **No FX conversion**: The app sums `price × shares` across currencies directly. Mixed USD/CAD portfolios will have values that are not currency-normalized.
 - **Unadjusted closes**: Uses raw `Close`, not split/dividend-adjusted prices, to avoid double-counting with SPLIT transactions and the separate dividends feature.
-- **Unresolved tickers**: If yfinance cannot resolve a symbol, that security contributes 0 for all days and a warning is printed. Fix the ticker mapping or add the security manually.
+- **Unresolved tickers**: If yfinance cannot resolve a symbol, that security is skipped with a warning. Fix the ticker mapping or add prices manually.
 - **TSX tickers**: `TSE:ENB` / `TSX:ENB` → `ENB.TO`; Alpha Vantage-style `ENB.TRT` / `ENB.TRV` → `ENB.TO`. Bare US tickers (e.g. `GOOG`) pass through unchanged.

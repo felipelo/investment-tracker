@@ -29,4 +29,14 @@ public interface PriceSnapshotRepository extends JpaRepository<PriceSnapshot, Lo
             )
             """)
     List<PriceSnapshot> findLatestPerSecurity();
+
+    @Query("""
+            SELECT p FROM PriceSnapshot p
+            JOIN FETCH p.security
+            WHERE p.snapshotDate = (
+                SELECT MAX(p2.snapshotDate) FROM PriceSnapshot p2
+                WHERE p2.security.id = p.security.id AND p2.snapshotDate <= :asOf
+            )
+            """)
+    List<PriceSnapshot> findLatestPerSecurityAsOf(@Param("asOf") LocalDate asOf);
 }

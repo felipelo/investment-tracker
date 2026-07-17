@@ -15,6 +15,14 @@ public record DividendSummaryResponse(
         List<BigDecimal> months,
         List<BigDecimal> cumulative,
         BigDecimal ytdTotal,
-        List<Integer> availableYears
+        List<Integer> availableYears,
+        List<List<MonthSlice>> breakdown
 ) {
+
+    /**
+     * A single holding's net dividend contribution within one month. Slices are
+     * ordered by amount descending so the biggest payer stacks at the bottom.
+     */
+    public record MonthSlice(long securityId, String ticker, String name, BigDecimal amount) {
+    }
 }

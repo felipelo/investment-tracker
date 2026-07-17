@@ -18,6 +18,7 @@ public record CreateDividendRequest(
         @DecimalMin(value = "0.0", message = "Withholding tax must be zero or greater") BigDecimal withholdingTax,
         @Size(min = 3, max = 3) String currency,
         Boolean drip,
+        Long reinvestmentTransactionId,
         String notes
 ) {
 }

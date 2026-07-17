@@ -7,25 +7,14 @@ import {
   useDeleteDividend,
   useDividends,
   useSecurities,
+  useTransactions,
   useUpdateDividend,
 } from '../api/hooks';
 import { ApiError } from '../api/client';
-import type { CreateDividend, Dividend } from '../api/types';
+import type { CreateDividend, Dividend, SecurityTransaction } from '../api/types';
 import { formatMoney } from '../lib/actions';
 import { usePortfolioContext } from '../context/PortfolioContext';
 import DividendsList from '../components/DividendsList';
-
-const TYPE_TAG: Record<string, string> = {
-  Taxable: 'tag-peach',
-  TFSA: 'tag-sky',
-  RRSP: 'tag-butter',
-  'Smith Maneuver': 'tag-lavender',
-  Other: 'tag-sage',
-};
-
-function typeTagClass(type: string | null): string {
-  return (type && TYPE_TAG[type]) || 'tag-sage';
-}
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -38,6 +27,7 @@ interface FormState {
   grossAmount: string;
   withholdingTax: string;
   drip: boolean;
+  reinvestmentTransactionId: string;
   notes: string;
 }
 
@@ -48,8 +38,25 @@ const initialState: FormState = {
   grossAmount: '',
   withholdingTax: '',
   drip: false,
+  reinvestmentTransactionId: '',
   notes: '',
 };
+
+const REINVESTMENT_ACTIONS = new Set<SecurityTransaction['action']>([
+  'BUY',
+  'REINVESTED_DISTRIBUTION',
+]);
+
+function describeTransaction(transaction: SecurityTransaction): string {
+  const action = transaction.action === 'BUY' ? 'Buy' : 'Reinvested Distribution';
+  const detail =
+    transaction.shares !== null && transaction.pricePerShare !== null
+      ? `${Number(transaction.shares)} @ ${transaction.pricePerShare}`
+      : transaction.cashAmount !== null
+        ? transaction.cashAmount
+        : '';
+  return `${action}${detail ? ` ${detail}` : ''} on ${transaction.date}`;
+}
 
 function computeNet(gross: string, withholding: string): string | null {
   if (String(gross).trim() === '') return null;
@@ -60,8 +67,7 @@ function computeNet(gross: string, withholding: string): string | null {
 }
 
 export default function DividendsPage() {
-  const { portfolios, activePortfolioId, activePortfolio, setActivePortfolioId } =
-    usePortfolioContext();
+  const { activePortfolioId, activePortfolio } = usePortfolioContext();
   const securities = useSecurities();
   const accounts = useAccounts(activePortfolioId);
   const dividends = useDividends(activePortfolioId);
@@ -78,6 +84,20 @@ export default function DividendsPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
 
+  const reinvestmentTransactions = useTransactions(
+    activePortfolioId === null
+      ? null
+      : {
+          portfolioId: activePortfolioId,
+          ...(form.securityId !== '' && { securityId: Number(form.securityId) }),
+        },
+  );
+
+  const reinvestmentOptions = useMemo(
+    () => (reinvestmentTransactions.data ?? []).filter((t) => REINVESTMENT_ACTIONS.has(t.action)),
+    [reinvestmentTransactions.data],
+  );
+
   const netPreview = useMemo(
     () => computeNet(form.grossAmount, form.withholdingTax),
     [form.grossAmount, form.withholdingTax],
@@ -90,7 +110,7 @@ export default function DividendsPage() {
 
   function handleSecurityChange(securityId: string) {
     setForm((prev) => {
-      const next = { ...prev, securityId };
+      const next = { ...prev, securityId, reinvestmentTransactionId: '' };
       if (editingId === null && securityId !== '') {
         const latest = dividends.data?.find((d) => String(d.securityId) === securityId);
         next.grossAmount = latest ? String(latest.grossAmount) : '';
@@ -119,6 +139,10 @@ export default function DividendsPage() {
       grossAmount: String(dividend.grossAmount),
       withholdingTax: String(dividend.withholdingTax),
       drip: dividend.drip,
+      reinvestmentTransactionId:
+        dividend.reinvestmentTransactionId !== null
+          ? String(dividend.reinvestmentTransactionId)
+          : '',
       notes: dividend.notes ?? '',
     });
     setEditingId(dividend.id);
@@ -150,6 +174,10 @@ export default function DividendsPage() {
       grossAmount: form.grossAmount,
       withholdingTax: form.withholdingTax.trim() === '' ? null : form.withholdingTax,
       drip: form.drip,
+      reinvestmentTransactionId:
+        form.drip && form.reinvestmentTransactionId !== ''
+          ? Number(form.reinvestmentTransactionId)
+          : null,
       notes: form.notes.trim() === '' ? null : form.notes,
     };
   }
@@ -209,33 +237,6 @@ export default function DividendsPage() {
               : 'Add, edit and delete dividend income'}
           </p>
         </div>
-        {activePortfolio && (
-          <div className="portfolio-switcher">
-            <span className={`tag ${typeTagClass(activePortfolio.type)}`}>
-              {activePortfolio.type ?? 'Other'}
-            </span>
-            <select
-              value={activePortfolioId ?? ''}
-              onChange={(e) => {
-                resetForm();
-                setActivePortfolioId(Number(e.target.value));
-              }}
-              style={{
-                fontFamily: 'var(--font)',
-                fontSize: '0.875rem',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-              }}
-            >
-              {portfolios.map((portfolio) => (
-                <option key={portfolio.id} value={portfolio.id}>
-                  {portfolio.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
       </header>
 
       {activePortfolioId === null && (
@@ -358,11 +359,43 @@ export default function DividendsPage() {
                         id="dividend-drip"
                         type="checkbox"
                         checked={form.drip}
-                        onChange={(e) => update('drip', e.target.checked)}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            drip: e.target.checked,
+                            reinvestmentTransactionId: e.target.checked
+                              ? prev.reinvestmentTransactionId
+                              : '',
+                          }))
+                        }
                       />
                       Reinvested (DRIP)
                     </label>
                   </div>
+
+                  {form.drip && (
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label htmlFor="dividend-reinvestment">Reinvestment transaction</label>
+                      <select
+                        id="dividend-reinvestment"
+                        value={form.reinvestmentTransactionId}
+                        onChange={(e) => update('reinvestmentTransactionId', e.target.value)}
+                        disabled={form.securityId === '' || reinvestmentTransactions.isPending}
+                      >
+                        <option value="">
+                          {form.securityId === ''
+                            ? 'Select a security first'
+                            : 'None (not linked)'}
+                        </option>
+                        {reinvestmentOptions.map((transaction) => (
+                          <option key={transaction.id} value={transaction.id}>
+                            {describeTransaction(transaction)}
+                          </option>
+                        ))}
+                      </select>
+                      <FieldError message={fieldErrors.reinvestmentTransactionId} />
+                    </div>
+                  )}
                 </div>
 
                 <div className="dividends-form-sidebar">

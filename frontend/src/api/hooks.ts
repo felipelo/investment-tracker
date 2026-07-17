@@ -8,7 +8,6 @@ import type {
   UpdateAccount,
   CreateDividend,
   CreatePortfolio,
-  CreatePortfolioSnapshot,
   CreatePriceSnapshots,
   CreateSecurity,
   CreateSecurityTransaction,
@@ -19,13 +18,13 @@ import type {
   Holding,
   HoldingHistoryRow,
   Portfolio,
-  PortfolioSnapshot,
   PriceSnapshot,
   Quote,
   Security,
   SecurityTransaction,
   SmithManeuverData,
   SmithManeuverFlow,
+  TaxSummary,
   TransactionFilters,
   UpdatePortfolio,
 } from './types';
@@ -39,11 +38,12 @@ const keys = {
     ['holdings', portfolioId, securityId, 'history'] as const,
   transactions: (filters?: TransactionFilters) =>
     ['security-transactions', filters ?? {}] as const,
-  dashboard: (portfolioId: number) => ['dashboard', portfolioId] as const,
+  dashboard: (portfolioId: number | 'all') => ['dashboard', portfolioId] as const,
   dividends: (portfolioId: number) => ['dividends', portfolioId] as const,
-  dividendSummary: (portfolioId: number, year: number | null) =>
+  dividendSummary: (portfolioId: number | 'all', year: number | null) =>
     ['dividends', 'summary', portfolioId, year ?? 'latest'] as const,
-  portfolioSnapshots: (portfolioId: number) => ['portfolio-snapshots', portfolioId] as const,
+  taxSummary: (portfolioId: number, year: number | null) =>
+    ['tax-summary', portfolioId, year ?? 'latest'] as const,
   cashTransactions: (portfolioId: number) => ['cash-transactions', portfolioId] as const,
   smithManeuver: (portfolioId: number) => ['smith-maneuver', portfolioId] as const,
   quotes: (symbols: string) => ['quotes', symbols] as const,
@@ -56,11 +56,12 @@ export function useSecurities() {
   });
 }
 
-export function useAccounts(portfolioId?: number | null) {
+export function useAccounts(portfolioId: number | null) {
   return useQuery({
     queryKey: [...keys.accounts, portfolioId ?? null] as const,
     queryFn: () =>
-      api.get<Account[]>('/accounts', portfolioId != null ? { portfolioId } : undefined),
+      api.get<Account[]>('/accounts', { portfolioId: portfolioId! }),
+    enabled: portfolioId !== null,
   });
 }
 
@@ -71,14 +72,15 @@ export function usePortfolios() {
   });
 }
 
-export function useTransactions(filters?: TransactionFilters) {
+export function useTransactions(filters: TransactionFilters | null) {
   return useQuery({
-    queryKey: keys.transactions(filters),
+    queryKey: filters !== null ? keys.transactions(filters) : ['security-transactions', 'none'],
     queryFn: () =>
       api.get<SecurityTransaction[]>(
         '/security-transactions',
-        filters as Record<string, string | number | undefined> | undefined,
+        filters as Record<string, string | number | undefined>,
       ),
+    enabled: filters !== null,
   });
 }
 
@@ -119,7 +121,6 @@ export function useCreatePriceSnapshots() {
       queryClient.invalidateQueries({ queryKey: ['holdings'] });
       queryClient.invalidateQueries({ queryKey: keys.portfolios });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['portfolio-snapshots'] });
     },
   });
 }
@@ -134,11 +135,16 @@ export function useQuotes(symbols: string[]) {
   });
 }
 
-export function useDashboard(portfolioId: number | null) {
+export function useDashboard(portfolioId: number | null, overall = false) {
   return useQuery({
-    queryKey: portfolioId !== null ? keys.dashboard(portfolioId) : ['dashboard', 'none'],
-    queryFn: () => api.get<DashboardData>(`/portfolios/${portfolioId}/dashboard`),
-    enabled: portfolioId !== null,
+    queryKey: overall
+      ? keys.dashboard('all')
+      : portfolioId !== null
+        ? keys.dashboard(portfolioId)
+        : ['dashboard', 'none'],
+    queryFn: () =>
+      api.get<DashboardData>(overall ? '/portfolios/dashboard' : `/portfolios/${portfolioId}/dashboard`),
+    enabled: overall || portfolioId !== null,
   });
 }
 
@@ -150,15 +156,31 @@ export function useDividends(portfolioId: number | null) {
   });
 }
 
-export function useDividendSummary(portfolioId: number | null, year: number | null) {
+export function useDividendSummary(portfolioId: number | null, year: number | null, overall = false) {
   return useQuery({
-    queryKey:
-      portfolioId !== null
+    queryKey: overall
+      ? keys.dividendSummary('all', year)
+      : portfolioId !== null
         ? keys.dividendSummary(portfolioId, year)
         : ['dividends', 'summary', 'none'],
     queryFn: () =>
       api.get<DividendSummary>(
-        `/portfolios/${portfolioId}/dividends/summary`,
+        overall
+          ? '/portfolios/dividends/summary'
+          : `/portfolios/${portfolioId}/dividends/summary`,
+        year !== null ? { year } : undefined,
+      ),
+    enabled: overall || portfolioId !== null,
+  });
+}
+
+export function useTaxSummary(portfolioId: number | null, year: number | null) {
+  return useQuery({
+    queryKey:
+      portfolioId !== null ? keys.taxSummary(portfolioId, year) : ['tax-summary', 'none'],
+    queryFn: () =>
+      api.get<TaxSummary>(
+        `/portfolios/${portfolioId}/tax-summary`,
         year !== null ? { year } : undefined,
       ),
     enabled: portfolioId !== null,
@@ -276,27 +298,6 @@ export function useDeleteFlow() {
   return useMutation({
     mutationFn: (id: number) => api.del(`/smith-maneuver-flows/${id}`),
     onSuccess: () => invalidateSmithManeuverViews(queryClient),
-  });
-}
-
-export function usePortfolioSnapshots(portfolioId: number | null) {
-  return useQuery({
-    queryKey:
-      portfolioId !== null ? keys.portfolioSnapshots(portfolioId) : ['portfolio-snapshots', 'none'],
-    queryFn: () => api.get<PortfolioSnapshot[]>(`/portfolios/${portfolioId}/snapshots`),
-    enabled: portfolioId !== null,
-  });
-}
-
-export function useCreatePortfolioSnapshot(portfolioId: number) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (body: CreatePortfolioSnapshot) =>
-      api.post<PortfolioSnapshot>(`/portfolios/${portfolioId}/snapshots`, body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.portfolioSnapshots(portfolioId) });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-    },
   });
 }
 

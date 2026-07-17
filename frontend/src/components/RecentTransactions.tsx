@@ -3,14 +3,19 @@ import { actionMeta, formatMoney, formatNumber, formatPricePerShare } from '../l
 import type { SecurityTransaction } from '../api/types';
 
 interface RecentTransactionsProps {
+  portfolioId: number | null;
   selectedId?: number | null;
   onSelect?: (tx: SecurityTransaction) => void;
 }
 
-export default function RecentTransactions({ selectedId, onSelect }: RecentTransactionsProps) {
-  const transactions = useTransactions();
+export default function RecentTransactions({
+  portfolioId,
+  selectedId,
+  onSelect,
+}: RecentTransactionsProps) {
+  const transactions = useTransactions(portfolioId === null ? null : { portfolioId });
   const securities = useSecurities();
-  const accounts = useAccounts();
+  const accounts = useAccounts(portfolioId);
 
   const securityById = new Map(
     (securities.data ?? []).map((s) => [s.id, s.ticker]),

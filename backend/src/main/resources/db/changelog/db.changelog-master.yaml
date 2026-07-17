@@ -29,3 +29,9 @@ databaseChangeLog:
       file: db/changelog/changes/014-add-denied-loss-adjustment.yaml
   - include:
       file: db/changelog/changes/015-add-dividend-account.yaml
+  - include:
+      file: db/changelog/changes/016-add-dividend-reinvestment-link.yaml
+  - include:
+      file: db/changelog/changes/017-create-audit-tables.yaml
+  - include:
+      file: db/changelog/changes/018-drop-portfolio-snapshot.yaml

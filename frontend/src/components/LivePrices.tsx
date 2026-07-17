@@ -11,15 +11,15 @@ interface LivePricesProps {
   onReload: () => void;
 }
 
-function formatPrice(quote: Quote | undefined): string {
-  if (!quote || !quote.available || quote.price === null) return 'Unavailable';
-  const num = Number(quote.price);
-  if (Number.isNaN(num)) return quote.price;
+function formatPrice(price: string | null, currency: string | null): string {
+  if (price === null) return 'Unavailable';
+  const num = Number(price);
+  if (Number.isNaN(num)) return price;
   const formatted = num.toLocaleString('en-CA', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  return quote.currency ? `${formatted} ${quote.currency}` : formatted;
+  return currency ? `${formatted} ${currency}` : formatted;
 }
 
 export default function LivePrices({
@@ -39,11 +39,18 @@ export default function LivePrices({
   const rows = holdings.map((holding) => {
     const symbol = tickerToMarketSymbol(holding.ticker);
     const quote = bySymbol.get(symbol);
-    const available = quote?.available && quote.price !== null;
+    const isLive = quote?.available === true && quote.price !== null;
+    const price = isLive ? quote.price : holding.latestPrice;
+    const currency = isLive ? quote.currency : null;
+    const source = isLive
+      ? `Live · ${new Date(quote.asOf).toLocaleString('en-CA')}`
+      : price !== null
+        ? `Saved${holding.priceDate ? ` · ${holding.priceDate}` : ''}`
+        : null;
 
     let value: string | null = null;
-    if (available && quote) {
-      const v = Number(holding.shareBalance) * Number(quote.price);
+    if (price !== null) {
+      const v = Number(holding.shareBalance) * Number(price);
       if (!Number.isNaN(v)) {
         value = String(v);
         liveTotal += v;
@@ -53,10 +60,8 @@ export default function LivePrices({
       anyUnavailable = true;
     }
 
-    return { holding, symbol, quote, value };
+    return { holding, symbol, price, currency, source, value };
   });
-
-  const asOf = (quotes ?? []).find((q) => q.available)?.asOf ?? null;
 
   return (
     <div className="card" style={{ marginBottom: '1.25rem' }}>
@@ -75,7 +80,6 @@ export default function LivePrices({
           </p>
           <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             Delayed market data · display only
-            {asOf ? ` · as of ${new Date(asOf).toLocaleTimeString('en-CA')}` : ''}
           </p>
         </div>
         <button type="button" className="btn btn-ghost" onClick={onReload} disabled={isFetching}>
@@ -85,7 +89,7 @@ export default function LivePrices({
 
       {isError && (
         <div className="banner banner-warn" style={{ marginTop: '1rem' }}>
-          Could not fetch live prices. Try reloading.
+          Could not fetch live prices. Showing the latest saved prices where available.
         </div>
       )}
 
@@ -97,41 +101,43 @@ export default function LivePrices({
             <thead>
               <tr>
                 <th>Security</th>
-                <th style={{ textAlign: 'right' }}>Live price</th>
-                <th style={{ textAlign: 'right' }}>Live value</th>
+                <th style={{ textAlign: 'right' }}>Price</th>
+                <th style={{ textAlign: 'right' }}>Value</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ holding, symbol, quote, value }) => {
-                const available = quote?.available && quote.price !== null;
-                return (
-                  <tr key={holding.securityId}>
-                    <td>
-                      <div className="ticker">{holding.ticker}</div>
+              {rows.map(({ holding, symbol, price, currency, source, value }) => (
+                <tr key={holding.securityId}>
+                  <td>
+                    <div className="ticker">{holding.ticker}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      {holding.name} · {symbol}
+                    </div>
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: price === null ? 'var(--text-faint)' : undefined,
+                    }}
+                  >
+                    <div>{formatPrice(price, currency)}</div>
+                    {source && (
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        {holding.name} · {symbol}
+                        {source}
                       </div>
-                    </td>
-                    <td
-                      style={{
-                        textAlign: 'right',
-                        color: available ? undefined : 'var(--text-faint)',
-                      }}
-                    >
-                      {formatPrice(quote)}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      {value !== null ? formatMoney(value) : '—'}
-                    </td>
-                  </tr>
-                );
-              })}
+                    )}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    {value !== null ? formatMoney(value) : '—'}
+                  </td>
+                </tr>
+              ))}
             </tbody>
             {hasAnyValue && (
               <tfoot>
                 <tr>
                   <td style={{ fontWeight: 600 }}>
-                    Live total{anyUnavailable ? ' (available only)' : ''}
+                    Total{anyUnavailable ? ' (available only)' : ''}
                   </td>
                   <td />
                   <td style={{ textAlign: 'right', fontWeight: 600 }}>

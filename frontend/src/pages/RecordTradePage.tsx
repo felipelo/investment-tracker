@@ -464,7 +464,11 @@ export default function RecordTradePage() {
         </form>
       </div>
 
-      <RecentTransactions selectedId={editingId} onSelect={loadForEdit} />
+      <RecentTransactions
+        portfolioId={activePortfolioId}
+        selectedId={editingId}
+        onSelect={loadForEdit}
+      />
 
       {showAddSecurity && (
         <AddSecurityModal

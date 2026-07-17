@@ -3,13 +3,12 @@ package com.investmenttracker.web;
 import com.investmenttracker.service.DashboardService;
 import com.investmenttracker.service.DividendService;
 import com.investmenttracker.service.PortfolioService;
-import com.investmenttracker.service.PortfolioSnapshotService;
+import com.investmenttracker.service.TaxSummaryService;
 import com.investmenttracker.web.dto.CreatePortfolioRequest;
-import com.investmenttracker.web.dto.CreatePortfolioSnapshotRequest;
 import com.investmenttracker.web.dto.DashboardResponse;
 import com.investmenttracker.web.dto.DividendSummaryResponse;
 import com.investmenttracker.web.dto.PortfolioResponse;
-import com.investmenttracker.web.dto.PortfolioSnapshotResponse;
+import com.investmenttracker.web.dto.TaxSummaryResponse;
 import com.investmenttracker.web.dto.UpdatePortfolioRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -35,26 +33,40 @@ import java.util.List;
 public class PortfolioController {
 
     private final PortfolioService portfolioService;
-    private final PortfolioSnapshotService portfolioSnapshotService;
     private final DashboardService dashboardService;
     private final DividendService dividendService;
+    private final TaxSummaryService taxSummaryService;
 
     public PortfolioController(
             PortfolioService portfolioService,
-            PortfolioSnapshotService portfolioSnapshotService,
             DashboardService dashboardService,
-            DividendService dividendService
+            DividendService dividendService,
+            TaxSummaryService taxSummaryService
     ) {
         this.portfolioService = portfolioService;
-        this.portfolioSnapshotService = portfolioSnapshotService;
         this.dashboardService = dashboardService;
         this.dividendService = dividendService;
+        this.taxSummaryService = taxSummaryService;
     }
 
     @GetMapping
     @Operation(summary = "List portfolios with derived value, return and holdings count")
     public List<PortfolioResponse> listPortfolios() {
         return portfolioService.list();
+    }
+
+    @GetMapping("/dashboard")
+    @Operation(summary = "Aggregated dashboard widgets across all portfolios")
+    public DashboardResponse getOverallDashboard() {
+        return dashboardService.getOverallDashboard();
+    }
+
+    @GetMapping("/dividends/summary")
+    @Operation(summary = "Monthly dividend totals across all portfolios")
+    public DividendSummaryResponse getOverallDividendSummary(
+            @RequestParam(required = false) Integer year
+    ) {
+        return dividendService.summaryAll(year);
     }
 
     @GetMapping("/{id}")
@@ -86,24 +98,6 @@ public class PortfolioController {
         portfolioService.delete(id);
     }
 
-    @GetMapping("/{id}/snapshots")
-    @Operation(summary = "List recorded portfolio value snapshots (most recent first)")
-    public List<PortfolioSnapshotResponse> listSnapshots(@PathVariable Long id) {
-        return portfolioSnapshotService.list(id).stream()
-                .map(PortfolioSnapshotResponse::from)
-                .toList();
-    }
-
-    @PostMapping("/{id}/snapshots")
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Manually record a portfolio market-value snapshot (upsert per date)")
-    public PortfolioSnapshotResponse createSnapshot(
-            @PathVariable Long id,
-            @Valid @RequestBody CreatePortfolioSnapshotRequest request
-    ) {
-        return PortfolioSnapshotResponse.from(portfolioSnapshotService.create(id, request));
-    }
-
     @GetMapping("/{id}/dashboard")
     @Operation(summary = "Aggregated dashboard widgets for a portfolio")
     public DashboardResponse getDashboard(@PathVariable Long id) {
@@ -117,5 +111,14 @@ public class PortfolioController {
             @RequestParam(required = false) Integer year
     ) {
         return dividendService.summary(id, year);
+    }
+
+    @GetMapping("/{id}/tax-summary")
+    @Operation(summary = "Realized gains, dividend income and interest summary for a tax year")
+    public TaxSummaryResponse getTaxSummary(
+            @PathVariable Long id,
+            @RequestParam(required = false) Integer year
+    ) {
+        return taxSummaryService.summary(id, year);
     }
 }

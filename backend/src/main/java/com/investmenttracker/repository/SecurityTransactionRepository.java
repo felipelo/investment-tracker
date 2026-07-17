@@ -22,14 +22,16 @@ public interface SecurityTransactionRepository extends JpaRepository<SecurityTra
     @Query("""
             SELECT t FROM SecurityTransaction t
             JOIN FETCH t.security
-            LEFT JOIN FETCH t.account
-            WHERE (:securityId IS NULL OR t.security.id = :securityId)
+            LEFT JOIN FETCH t.account a
+            WHERE (:portfolioId IS NULL OR a.portfolio.id = :portfolioId)
+              AND (:securityId IS NULL OR t.security.id = :securityId)
               AND (:accountId IS NULL OR t.account.id = :accountId)
               AND (:from IS NULL OR t.date >= :from)
               AND (:to IS NULL OR t.date <= :to)
             ORDER BY t.date DESC, t.id DESC
             """)
     List<SecurityTransaction> findFiltered(
+            @Param("portfolioId") Long portfolioId,
             @Param("securityId") Long securityId,
             @Param("accountId") Long accountId,
             @Param("from") LocalDate from,

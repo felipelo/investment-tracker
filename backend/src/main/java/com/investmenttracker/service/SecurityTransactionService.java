@@ -34,8 +34,14 @@ public class SecurityTransactionService {
     }
 
     @Transactional(readOnly = true)
-    public List<SecurityTransaction> list(Long securityId, Long accountId, LocalDate from, LocalDate to) {
-        return securityTransactionRepository.findFiltered(securityId, accountId, from, to);
+    public List<SecurityTransaction> list(
+            Long portfolioId,
+            Long securityId,
+            Long accountId,
+            LocalDate from,
+            LocalDate to
+    ) {
+        return securityTransactionRepository.findFiltered(portfolioId, securityId, accountId, from, to);
     }
 
     @Transactional(readOnly = true)

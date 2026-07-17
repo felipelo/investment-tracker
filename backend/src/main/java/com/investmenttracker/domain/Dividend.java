@@ -10,12 +10,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
 @Entity
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 @Table(name = "dividend")
 public class Dividend {
 
@@ -34,6 +37,10 @@ public class Dividend {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
     private Account account;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reinvestment_transaction_id")
+    private SecurityTransaction reinvestmentTransaction;
 
     @Column(name = "payment_date", nullable = false)
     private LocalDate paymentDate;
@@ -101,6 +108,14 @@ public class Dividend {
 
     public void setAccount(Account account) {
         this.account = account;
+    }
+
+    public SecurityTransaction getReinvestmentTransaction() {
+        return reinvestmentTransaction;
+    }
+
+    public void setReinvestmentTransaction(SecurityTransaction reinvestmentTransaction) {
+        this.reinvestmentTransaction = reinvestmentTransaction;
     }
 
     public LocalDate getPaymentDate() {

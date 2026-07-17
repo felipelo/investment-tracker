@@ -1,6 +1,12 @@
 spring:
   application:
     name: investment-tracker
+  jpa:
+    properties:
+      hibernate:
+        envers:
+          audit_table_suffix: _aud
+          store_data_at_delete: true
 
 marketdata:
   alpha-vantage:

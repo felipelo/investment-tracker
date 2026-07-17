@@ -14,7 +14,10 @@ public record DashboardResponse(
         LocalDate asOfDate,
         ReturnFigure todaysReturn,
         ReturnFigure allTimeReturn,
+        ReturnFigure priceReturn,
+        ReturnFigure dividendReturn,
         List<PeriodReturn> periodReturns,
+        List<HoldingReturnBreakdown> holdingBreakdowns,
         List<AllocationSlice> allocation
 ) {
     @Schema(name = "DashboardReturnFigure")
@@ -34,7 +37,23 @@ public record DashboardResponse(
             String label,
             BigDecimal amount,
             BigDecimal pct,
+            BigDecimal priceAmount,
+            BigDecimal pricePct,
+            BigDecimal dividendAmount,
+            BigDecimal dividendPct,
             boolean available
+    ) {
+    }
+
+    /** Per-security split of the price and dividend returns, so the dashboard rows can expand per ETF. */
+    @Schema(name = "DashboardHoldingReturnBreakdown")
+    public record HoldingReturnBreakdown(
+            Long securityId,
+            String ticker,
+            String name,
+            ReturnFigure priceReturn,
+            ReturnFigure dividendReturn,
+            List<PeriodReturn> periodReturns
     ) {
     }
 

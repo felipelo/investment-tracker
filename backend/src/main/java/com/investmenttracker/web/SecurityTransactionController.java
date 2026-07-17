@@ -36,12 +36,13 @@ public class SecurityTransactionController {
     @GetMapping
     @Operation(summary = "List security transactions")
     public List<SecurityTransactionResponse> listTransactions(
+            @RequestParam(required = false) Long portfolioId,
             @RequestParam(required = false) Long securityId,
             @RequestParam(required = false) Long accountId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
-        return securityTransactionService.list(securityId, accountId, from, to).stream()
+        return securityTransactionService.list(portfolioId, securityId, accountId, from, to).stream()
                 .map(SecurityTransactionResponse::from)
                 .toList();
     }

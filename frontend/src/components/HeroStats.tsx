@@ -33,7 +33,7 @@ export default function HeroStats({ dashboard }: HeroStatsProps) {
               <span style={{ fontSize: '1rem' }}>({todayPct.text})</span>
             </p>
             <p className="card-meta">
-              {today.basisDate ? `vs snapshot ${today.basisDate}` : 'vs prior snapshot'}
+              {today.basisDate ? `vs ${today.basisDate}` : 'vs prior close'}
             </p>
           </>
         ) : (
@@ -41,7 +41,7 @@ export default function HeroStats({ dashboard }: HeroStatsProps) {
             <p className="card-value" style={{ color: 'var(--text-muted)' }}>
               —
             </p>
-            <p className="card-meta">Needs a prior portfolio snapshot</p>
+            <p className="card-meta">Needs prior price data</p>
           </>
         )}
       </div>

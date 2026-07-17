@@ -1,34 +1,23 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useDashboard, useDividendSummary, useHoldings, useQuotes } from '../api/hooks';
 import { usePortfolioContext } from '../context/PortfolioContext';
 import { tickerToMarketSymbol } from '../lib/symbols';
 import HeroStats from '../components/HeroStats';
-import PeriodReturns from '../components/PeriodReturns';
+import ReturnBreakdownTable from '../components/ReturnBreakdownTable';
 import AllocationDonut from '../components/AllocationDonut';
 import DividendsChart from '../components/DividendsChart';
 import LivePrices from '../components/LivePrices';
 
-const TYPE_TAG: Record<string, string> = {
-  Taxable: 'tag-peach',
-  TFSA: 'tag-sky',
-  RRSP: 'tag-butter',
-  'Smith Maneuver': 'tag-lavender',
-  Other: 'tag-sage',
-};
-
-function typeTagClass(type: string | null): string {
-  return (type && TYPE_TAG[type]) || 'tag-sage';
-}
-
 export default function DashboardPage() {
-  const { portfolios, activePortfolioId, activePortfolio, setActivePortfolioId } =
-    usePortfolioContext();
-  const dashboard = useDashboard(activePortfolioId);
+  const [searchParams] = useSearchParams();
+  const isOverall = searchParams.get('view') === 'all';
+  const { portfolios, activePortfolioId, activePortfolio } = usePortfolioContext();
+  const dashboard = useDashboard(activePortfolioId, isOverall);
   const [year, setYear] = useState<number | null>(null);
-  const dividendSummary = useDividendSummary(activePortfolioId, year);
+  const dividendSummary = useDividendSummary(activePortfolioId, year, isOverall);
 
-  const holdings = useHoldings(activePortfolioId);
+  const holdings = useHoldings(isOverall ? null : activePortfolioId);
   const holdingData = useMemo(() => holdings.data ?? [], [holdings.data]);
   const symbols = useMemo(
     () => Array.from(new Set(holdingData.map((h) => tickerToMarketSymbol(h.ticker)))),
@@ -41,6 +30,7 @@ export default function DashboardPage() {
     data != null &&
     !data.todaysReturn.available &&
     data.periodReturns.every((p) => !p.available);
+  const hasMixedCurrencies = new Set(portfolios.map((portfolio) => portfolio.baseCurrency)).size > 1;
 
   return (
     <>
@@ -48,37 +38,13 @@ export default function DashboardPage() {
         <div>
           <h1 className="page-title">Dashboard</h1>
           <p className="page-subtitle">
-            {activePortfolio ? activePortfolio.name : 'Portfolio overview'}
+            {isOverall ? 'All portfolios' : activePortfolio?.name ?? 'Portfolio overview'}
             {data?.asOfDate ? ` · snapshot ${data.asOfDate}` : ''}
           </p>
         </div>
-        {activePortfolio && (
-          <div className="portfolio-switcher">
-              <span className={`tag ${typeTagClass(activePortfolio.type)}`}>
-                {activePortfolio.type ?? 'Other'}
-              </span>
-              <select
-                value={activePortfolioId ?? ''}
-                onChange={(e) => setActivePortfolioId(Number(e.target.value))}
-                style={{
-                  fontFamily: 'var(--font)',
-                  fontSize: '0.875rem',
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                }}
-              >
-                {portfolios.map((portfolio) => (
-                  <option key={portfolio.id} value={portfolio.id}>
-                    {portfolio.name}
-                  </option>
-                ))}
-              </select>
-          </div>
-        )}
       </header>
 
-      {activePortfolioId === null && (
+      {!isOverall && activePortfolioId === null && (
         <div className="card">
           <p style={{ color: 'var(--text-muted)', margin: 0 }}>
             No portfolio selected. <Link to="/portfolios">Create a portfolio</Link> to get
@@ -87,7 +53,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {activePortfolioId !== null && dashboard.isPending && (
+      {(isOverall || activePortfolioId !== null) && dashboard.isPending && (
         <div className="card">
           <p style={{ color: 'var(--text-muted)', margin: 0 }}>Loading…</p>
         </div>
@@ -103,6 +69,12 @@ export default function DashboardPage() {
 
       {data && (
         <>
+          {isOverall && hasMixedCurrencies && (
+            <div className="banner banner-info" style={{ marginBottom: '1.25rem' }}>
+              Overall totals combine portfolio currencies without conversion.
+            </div>
+          )}
+
           {data.portfolioValue === null && (
             <div className="banner banner-info" style={{ marginBottom: '1.25rem' }}>
               No prices recorded yet.{' '}
@@ -118,7 +90,6 @@ export default function DashboardPage() {
           )}
 
           <HeroStats dashboard={data} />
-          <PeriodReturns periodReturns={data.periodReturns} />
 
           {holdingData.length > 0 && (
             <LivePrices
@@ -148,6 +119,10 @@ export default function DashboardPage() {
                 <p style={{ color: 'var(--text-muted)', margin: 0 }}>Loading…</p>
               </div>
             )}
+          </div>
+
+          <div style={{ marginTop: '1.25rem' }}>
+            <ReturnBreakdownTable dashboard={data} />
           </div>
         </>
       )}

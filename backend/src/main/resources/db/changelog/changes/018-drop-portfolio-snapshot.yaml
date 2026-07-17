@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-drop-portfolio-snapshot
+      author: investment-tracker
+      comment: >
+        Portfolio value and period returns are now computed live from
+        price_snapshot + transactions, so the materialized aggregate is removed.
+      changes:
+        - dropTable:
+            tableName: portfolio_snapshot

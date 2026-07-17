@@ -114,6 +114,7 @@ export interface CreateSecurityTransaction {
 }
 
 export interface TransactionFilters {
+  portfolioId?: number;
   securityId?: number;
   accountId?: number;
   from?: string;
@@ -179,19 +180,6 @@ export interface Quote {
   available: boolean;
 }
 
-export interface PortfolioSnapshot {
-  id: number;
-  portfolioId: number;
-  date: string;
-  marketValue: string;
-  createdAt: string;
-}
-
-export interface CreatePortfolioSnapshot {
-  date: string;
-  marketValue: string;
-}
-
 export interface Dividend {
   id: number;
   portfolioId: number;
@@ -206,6 +194,8 @@ export interface Dividend {
   netAmount: string;
   currency: string;
   drip: boolean;
+  reinvestmentTransactionId: number | null;
+  reinvestmentTransactionLabel: string | null;
   notes: string | null;
   createdAt: string;
 }
@@ -219,7 +209,15 @@ export interface CreateDividend {
   withholdingTax?: string | null;
   currency?: string | null;
   drip?: boolean;
+  reinvestmentTransactionId?: number | null;
   notes?: string | null;
+}
+
+export interface DividendMonthSlice {
+  securityId: number;
+  ticker: string;
+  name: string;
+  amount: string;
 }
 
 export interface DividendSummary {
@@ -228,6 +226,7 @@ export interface DividendSummary {
   cumulative: string[];
   ytdTotal: string;
   availableYears: number[];
+  breakdown: DividendMonthSlice[][];
 }
 
 export type CashTransactionType =
@@ -286,7 +285,20 @@ export interface PeriodReturn {
   label: string;
   amount: string | null;
   pct: string | null;
+  priceAmount: string | null;
+  pricePct: string | null;
+  dividendAmount: string | null;
+  dividendPct: string | null;
   available: boolean;
+}
+
+export interface HoldingReturnBreakdown {
+  securityId: number;
+  ticker: string;
+  name: string;
+  priceReturn: ReturnFigure;
+  dividendReturn: ReturnFigure;
+  periodReturns: PeriodReturn[];
 }
 
 export interface AllocationSlice {
@@ -303,7 +315,10 @@ export interface DashboardData {
   asOfDate: string | null;
   todaysReturn: ReturnFigure;
   allTimeReturn: ReturnFigure;
+  priceReturn: ReturnFigure;
+  dividendReturn: ReturnFigure;
   periodReturns: PeriodReturn[];
+  holdingBreakdowns: HoldingReturnBreakdown[];
   allocation: AllocationSlice[];
 }
 
@@ -374,4 +389,46 @@ export interface CreateSmithManeuverFlow {
   cashTransactionIds: number[];
   securityTransactionId?: number | null;
   notes?: string | null;
+}
+
+export interface RealizedGainRow {
+  securityId: number | null;
+  ticker: string | null;
+  name: string | null;
+  dispositions: number;
+  proceeds: string;
+  acbDisposed: string;
+  gainLoss: string;
+}
+
+export interface DividendTaxRow {
+  securityId: number | null;
+  ticker: string | null;
+  name: string | null;
+  gross: string;
+  withholding: string;
+  net: string;
+}
+
+export interface InterestMonthRow {
+  month: string;
+  charged: string;
+  deductibleEstimate: string;
+}
+
+export interface TaxSummary {
+  year: number;
+  availableYears: number[];
+  realizedGains: {
+    rows: RealizedGainRow[];
+    total: RealizedGainRow;
+  };
+  dividends: {
+    rows: DividendTaxRow[];
+    total: DividendTaxRow;
+  };
+  interest: {
+    months: InterestMonthRow[];
+    ytd: InterestMonthRow;
+  };
 }

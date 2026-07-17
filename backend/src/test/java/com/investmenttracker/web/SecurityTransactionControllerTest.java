@@ -2,8 +2,10 @@ package com.investmenttracker.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.investmenttracker.domain.Account;
+import com.investmenttracker.domain.Portfolio;
 import com.investmenttracker.domain.Security;
 import com.investmenttracker.repository.AccountRepository;
+import com.investmenttracker.repository.PortfolioRepository;
 import com.investmenttracker.repository.SecurityRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -39,6 +42,9 @@ class SecurityTransactionControllerTest {
 
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private PortfolioRepository portfolioRepository;
 
     private Account account() {
         return accountRepository.findAllByOrderByLabelAsc().getFirst();
@@ -123,11 +129,68 @@ class SecurityTransactionControllerTest {
                 .andExpect(jsonPath("$[0].pricePerShare").value(4.9734));
     }
 
+    @Test
+    void listTransactionsFiltersByPortfolioAndComposesWithSecurityFilter() throws Exception {
+        var xei = security("TSE:XEI");
+        var bank = security("TSE:BANK");
+        var defaultAccount = account();
+        var otherPortfolio = createPortfolio("Other Portfolio");
+        var otherAccount = createAccount(otherPortfolio, "Other Margin");
+
+        createTrade(defaultAccount.getId(), xei.getId(), "2024-04-01");
+        createTrade(otherAccount.getId(), xei.getId(), "2024-04-02");
+        createTrade(otherAccount.getId(), bank.getId(), "2024-04-03");
+
+        mockMvc.perform(get("/api/v1/security-transactions")
+                        .param("portfolioId", String.valueOf(otherPortfolio.getId()))
+                        .param("securityId", String.valueOf(xei.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].accountId").value(otherAccount.getId()))
+                .andExpect(jsonPath("$[0].securityId").value(xei.getId()));
+    }
+
+    private void createTrade(Long accountId, Long securityId, String date) throws Exception {
+        mockMvc.perform(post("/api/v1/security-transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                tradeBody(accountId, securityId, "BUY", date, "1", "10.00"))))
+                .andExpect(status().isCreated());
+    }
+
+    private Portfolio createPortfolio(String name) {
+        var portfolio = new Portfolio();
+        portfolio.setName(name);
+        portfolio.setBaseCurrency("CAD");
+        return portfolioRepository.save(portfolio);
+    }
+
+    private Account createAccount(Portfolio portfolio, String label) {
+        var newAccount = new Account();
+        newAccount.setPortfolio(portfolio);
+        newAccount.setLabel(label);
+        newAccount.setType("Margin");
+        newAccount.setCurrency("CAD");
+        newAccount.setOpeningBalance(BigDecimal.ZERO);
+        return accountRepository.save(newAccount);
+    }
+
     private Map<String, Object> tradeBody(Long securityId, String action, String date, String shares, String price) {
+        return tradeBody(account().getId(), securityId, action, date, shares, price);
+    }
+
+    private Map<String, Object> tradeBody(
+            Long accountId,
+            Long securityId,
+            String action,
+            String date,
+            String shares,
+            String price
+    ) {
         var body = new LinkedHashMap<String, Object>();
         body.put("date", date);
         body.put("securityId", securityId);
-        body.put("accountId", account().getId());
+        body.put("accountId", accountId);
         body.put("action", action);
         body.put("shares", shares);
         body.put("pricePerShare", price);

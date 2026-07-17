@@ -20,18 +20,6 @@ import { usePortfolioContext } from '../context/PortfolioContext';
 import AccountFormModal from '../components/AccountFormModal';
 import CashTransactionsList from '../components/CashTransactionsList';
 
-const TYPE_TAG: Record<string, string> = {
-  Taxable: 'tag-peach',
-  TFSA: 'tag-sky',
-  RRSP: 'tag-butter',
-  'Smith Maneuver': 'tag-lavender',
-  Other: 'tag-sage',
-};
-
-function typeTagClass(type: string | null): string {
-  return (type && TYPE_TAG[type]) || 'tag-sage';
-}
-
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -73,8 +61,7 @@ function signedAmount(type: CashTransactionType, amount: string): string | null 
 }
 
 export default function CashTransactionsPage() {
-  const { portfolios, activePortfolioId, activePortfolio, setActivePortfolioId } =
-    usePortfolioContext();
+  const { activePortfolioId, activePortfolio } = usePortfolioContext();
   const accounts = useAccounts(activePortfolioId);
   const createTransaction = useCreateCashTransaction();
   const updateTransaction = useUpdateCashTransaction();
@@ -208,33 +195,6 @@ export default function CashTransactionsPage() {
               : 'Money flow — deposits, transfers, HELOC, interest'}
           </p>
         </div>
-        {activePortfolio && (
-          <div className="portfolio-switcher">
-            <span className={`tag ${typeTagClass(activePortfolio.type)}`}>
-              {activePortfolio.type ?? 'Other'}
-            </span>
-            <select
-              value={activePortfolioId ?? ''}
-              onChange={(e) => {
-                resetForm();
-                setActivePortfolioId(Number(e.target.value));
-              }}
-              style={{
-                fontFamily: 'var(--font)',
-                fontSize: '0.875rem',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-              }}
-            >
-              {portfolios.map((portfolio) => (
-                <option key={portfolio.id} value={portfolio.id}>
-                  {portfolio.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
       </header>
 
       {activePortfolioId === null && (

@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-add-dividend-reinvestment-link
+      author: investment-tracker
+      changes:
+        - addColumn:
+            tableName: dividend
+            columns:
+              - column:
+                  name: reinvestment_transaction_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_dividend_reinvestment_txn
+                    references: security_transaction(id)

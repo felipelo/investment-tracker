@@ -45,6 +45,19 @@ public interface DividendRepository extends JpaRepository<Dividend, Long> {
     java.math.BigDecimal sumNetByPortfolio(@Param("portfolioId") Long portfolioId);
 
     @Query("""
+            SELECT COALESCE(SUM(d.grossAmount - d.withholdingTax), 0)
+            FROM Dividend d
+            WHERE d.portfolio.id = :portfolioId
+              AND d.paymentDate > :after
+              AND d.paymentDate <= :through
+            """)
+    java.math.BigDecimal sumNetByPortfolioBetween(
+            @Param("portfolioId") Long portfolioId,
+            @Param("after") java.time.LocalDate after,
+            @Param("through") java.time.LocalDate through
+    );
+
+    @Query("""
             SELECT d FROM Dividend d
             WHERE d.portfolio.id = :portfolioId
               AND EXTRACT(YEAR FROM d.paymentDate) = :year

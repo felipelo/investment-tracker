@@ -1,5 +1,7 @@
-import { NavLink } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { Fragment, type ReactNode } from 'react';
+import PortfolioSwitcher from './PortfolioSwitcher';
+import { usePortfolioContext } from '../context/PortfolioContext';
 
 interface NavItem {
   to: string;
@@ -29,6 +31,10 @@ const sections: { title: string; items: NavItem[] }[] = [
 ];
 
 export default function AppShell({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const { activePortfolioId } = usePortfolioContext();
+  const isPortfolioManagement = location.pathname === '/portfolios';
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -58,7 +64,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
       </aside>
-      <main className="main">{children}</main>
+      <main className="main">
+        {!isPortfolioManagement && (
+          <div className="context-bar">
+            <PortfolioSwitcher />
+          </div>
+        )}
+        {isPortfolioManagement ? (
+          children
+        ) : (
+          <Fragment key={activePortfolioId ?? 'no-portfolio'}>{children}</Fragment>
+        )}
+      </main>
     </div>
   );
 }
