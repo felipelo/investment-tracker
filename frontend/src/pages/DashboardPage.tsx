@@ -7,7 +7,6 @@ import HeroStats from '../components/HeroStats';
 import ReturnBreakdownTable from '../components/ReturnBreakdownTable';
 import AllocationDonut from '../components/AllocationDonut';
 import DividendsChart from '../components/DividendsChart';
-import LivePrices from '../components/LivePrices';
 
 export default function DashboardPage() {
   const [searchParams] = useSearchParams();
@@ -24,6 +23,10 @@ export default function DashboardPage() {
     [holdingData],
   );
   const quotes = useQuotes(symbols);
+
+  // #region agent log
+  fetch('http://127.0.0.1:7878/ingest/686539c7-4571-47cb-8627-4f7f46385d72',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'bff96f'},body:JSON.stringify({sessionId:'bff96f',location:'DashboardPage.tsx:render',message:'quotes state on render',data:{holdingCount:holdingData.length,symbolCount:symbols.length,symbols,isFetching:quotes.isFetching,isPending:quotes.isPending,isError:quotes.isError,hasData:quotes.data!=null,dataUpdatedAt:quotes.dataUpdatedAt},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+  // #endregion
 
   const data = dashboard.data;
   const noReturns =
@@ -42,6 +45,29 @@ export default function DashboardPage() {
             {data?.asOfDate ? ` · snapshot ${data.asOfDate}` : ''}
           </p>
         </div>
+        {holdingData.length > 0 && (
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => {
+              // #region agent log
+              fetch('http://127.0.0.1:7878/ingest/686539c7-4571-47cb-8627-4f7f46385d72',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'bff96f'},body:JSON.stringify({sessionId:'bff96f',location:'DashboardPage.tsx:reloadClick',message:'Reload prices clicked',data:{symbolCount:symbols.length,isFetching:quotes.isFetching,isPending:quotes.isPending,isError:quotes.isError},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+              // #endregion
+              void quotes.refetch().then((result) => {
+                // #region agent log
+                fetch('http://127.0.0.1:7878/ingest/686539c7-4571-47cb-8627-4f7f46385d72',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'bff96f'},body:JSON.stringify({sessionId:'bff96f',location:'DashboardPage.tsx:reloadClick:done',message:'refetch completed',data:{status:result.status,isError:result.isError,isFetching:result.isFetching,dataUpdatedAt:result.dataUpdatedAt,quoteCount:result.data?.length??0},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+                // #endregion
+              }).catch((err) => {
+                // #region agent log
+                fetch('http://127.0.0.1:7878/ingest/686539c7-4571-47cb-8627-4f7f46385d72',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'bff96f'},body:JSON.stringify({sessionId:'bff96f',location:'DashboardPage.tsx:reloadClick:error',message:'refetch rejected',data:{error:String(err)},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+                // #endregion
+              });
+            }}
+            disabled={quotes.isFetching}
+          >
+            {quotes.isFetching ? 'Reloading…' : 'Reload prices'}
+          </button>
+        )}
       </header>
 
       {!isOverall && activePortfolioId === null && (
@@ -90,19 +116,6 @@ export default function DashboardPage() {
           )}
 
           <HeroStats dashboard={data} />
-
-          {holdingData.length > 0 && (
-            <LivePrices
-              holdings={holdingData}
-              quotes={quotes.data}
-              isLoading={quotes.isPending}
-              isFetching={quotes.isFetching}
-              isError={quotes.isError}
-              onReload={() => {
-                void quotes.refetch();
-              }}
-            />
-          )}
 
           <div className="grid-dashboard">
             <AllocationDonut allocation={data.allocation} />

@@ -129,7 +129,22 @@ export function useQuotes(symbols: string[]) {
   const joined = symbols.join(',');
   return useQuery({
     queryKey: keys.quotes(joined),
-    queryFn: () => api.get<Quote[]>('/quotes', { symbols: joined }),
+    queryFn: () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7878/ingest/686539c7-4571-47cb-8627-4f7f46385d72',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'bff96f'},body:JSON.stringify({sessionId:'bff96f',location:'hooks.ts:useQuotes:queryFn',message:'quotes queryFn executing',data:{joined,symbolCount:symbols.length},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
+      return api.get<Quote[]>('/quotes', { symbols: joined }).then((result) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7878/ingest/686539c7-4571-47cb-8627-4f7f46385d72',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'bff96f'},body:JSON.stringify({sessionId:'bff96f',location:'hooks.ts:useQuotes:queryFn:success',message:'quotes queryFn succeeded',data:{joined,quoteCount:result.length},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+        // #endregion
+        return result;
+      }).catch((err) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7878/ingest/686539c7-4571-47cb-8627-4f7f46385d72',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'bff96f'},body:JSON.stringify({sessionId:'bff96f',location:'hooks.ts:useQuotes:queryFn:error',message:'quotes queryFn failed',data:{joined,error:String(err)},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+        // #endregion
+        throw err;
+      });
+    },
     enabled: symbols.length > 0,
     staleTime: 60_000,
   });
