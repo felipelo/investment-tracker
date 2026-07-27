@@ -1,12 +1,46 @@
 spring:
   application:
     name: investment-tracker
+  datasource:
+    # Host and credentials come from the environment so the same image runs anywhere.
+    # No password fallback on purpose: a missing secret must fail startup, not connect
+    # with a well-known development credential.
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT:5432}/${POSTGRES_DB:investment_tracker}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
   jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
     properties:
       hibernate:
         envers:
           audit_table_suffix: _aud
           store_data_at_delete: true
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+server:
+  shutdown: graceful
+  # Honour X-Forwarded-* so redirects and generated links use the external host/scheme.
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+app:
+  auth:
+    username: ${APP_AUTH_USERNAME:}
+    # A raw bcrypt digest ($2y$10$...), never a plaintext password and no {id} prefix.
+    password-hash: ${APP_AUTH_PASSWORD_HASH:}
 
 marketdata:
   alpha-vantage:

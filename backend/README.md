@@ -68,14 +68,22 @@ Two multi-stage Dockerfiles are provided. Both build with the committed Maven wr
 
 The `native` profile is supplied by `spring-boot-starter-parent`, so it only needs the `native-maven-plugin` build args in `pom.xml`, not the full plugin setup.
 
+Both images also build the SPA and copy it into `src/main/resources/static`, so one container serves
+the UI and the API on a single origin. That is what lets the frontend keep its relative `/api/v1`
+base URL: no CORS, no second host, and one credential prompt for both.
+
 ### Build the images
 
+The build context is the **repository root**, because the image spans both projects:
+
 ```bash
+# from the repository root
+
 # JVM image
-docker build -t investment-tracker:jvm .
+docker build -f backend/Dockerfile -t investment-tracker:jvm .
 
 # Native image (GraalVM AOT — expect several minutes and high RAM)
-docker build -f Dockerfile.native -t investment-tracker:native .
+docker build -f backend/Dockerfile.native -t investment-tracker:native .
 ```
 
 Both need to pull base images from `ghcr.io`, `gcr.io`, and Docker Hub. On a restricted network the
@@ -83,17 +91,30 @@ build hangs on the pull; use the local GraalVM build below instead.
 
 ### Run a built image against local Postgres
 
+The container runs the default configuration, not the `local` profile, so it needs the database and
+auth variables spelled out. See [docs/MACHINE-SETUP.md](../docs/MACHINE-SETUP.md) section 6 for the
+full table and how to generate the bcrypt hash.
+
 ```bash
 docker compose up -d postgres            # start the database
 docker run --rm -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=local \
   -e POSTGRES_HOST=host.docker.internal \
+  -e POSTGRES_USER=investment_tracker \
+  -e POSTGRES_PASSWORD=investment_tracker \
+  -e APP_AUTH_USERNAME=tracker \
+  -e APP_AUTH_PASSWORD_HASH='$2y$10$...' \
   investment-tracker:jvm
 ```
+
+Then open `http://localhost:8080` — the browser prompts for the credential once and replays it for
+the SPA's API calls. `/actuator/health` and `/actuator/health/{liveness,readiness}` stay anonymous so
+a load balancer can reach them. Neither runtime base image ships an HTTP client, so there is no
+in-image `HEALTHCHECK`; point the orchestrator's HTTP probe at the readiness endpoint instead.
 
 ### Or build + run everything via compose
 
 ```bash
+export APP_AUTH_PASSWORD_HASH='...'        # compose refuses to start without it
 docker compose --profile full up --build   # app (JVM image) + Postgres
 docker compose up                          # Postgres only (default)
 ```
@@ -135,11 +156,12 @@ Measured on an Apple Silicon Mac with GraalVM CE 25.0.2:
 
 | | JVM | Native |
 |---|---|---|
-| Build | ~17 s (`./mvnw verify`, 105 tests) | ~2 min 20 s compile, peak ~7.6 GB RSS |
+| Build | ~17 s (`./mvnw verify`, 113 tests) | ~2 min 20 s compile, peak ~7.6 GB RSS |
 | Artifact | ~60 MB fat jar + JRE base image | 211 MB binary, distroless runtime image |
-| Startup | seconds | **0.9 s** |
+| Container image | 625 MB | 338 MB |
+| Startup | seconds | **0.9 s** on the host, ~3 s in a container to first healthy probe |
 
-Two AOT constraints are baked into the build:
+Three AOT constraints are baked into the build:
 
 - **No runtime bytecode provider.** Native images disable Hibernate's ByteBuddy provider, so lazy
   `@ManyToOne` associations and `getReferenceById()` cannot create proxies at runtime. The
@@ -149,8 +171,12 @@ Two AOT constraints are baked into the build:
 - **Liquibase reflection.** The GraalVM metadata repository does not cover the accessors Liquibase
   reflects on while parsing changesets, so the build passes `-H:Preserve=package=liquibase.*`. It
   costs ~14 MB of image size and can be dropped once upstream metadata covers Liquibase 5.x.
+- **zlib is not in distroless.** The binary links `libz.so.1` for `java.util.zip`, which
+  `distroless/base-debian12` does not ship, so it exits immediately with a loader error. The runtime
+  stage copies that single library out of `debian:12-slim` — the same Debian release distroless is
+  built from — instead of falling back to a full base image.
 
-Envers, springdoc, Jackson 3, and the PostgreSQL driver needed no hints of their own.
+Envers, springdoc, Jackson 3, Spring Security, and the PostgreSQL driver needed no hints of their own.
 
 ---
 
@@ -194,6 +220,6 @@ These decisions do not require feature requirements and are worth locking in ear
 | Maven project | Scaffolded (wrapper committed) |
 | Spring Boot app | Minimal (entrypoint only, no endpoints) |
 | Postgres / migrations | Compose + datasource config; no schema yet |
-| Docker / native image | `Dockerfile` + `Dockerfile.native` ready; native binary built and smoke-tested locally (container build unverified — registries unreachable here) |
+| Docker / native image | Both images build from the repository root and were run end to end: startup with no profile, anonymous health probes, Basic auth on everything else, SPA deep links, non-root, `TZ` honoured |
 
-Next step when ready: add the first health/readiness endpoint.
+Next step when ready: choose the AWS topology.

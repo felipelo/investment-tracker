@@ -5,14 +5,11 @@ import { useCreatePriceSnapshots } from '../api/hooks';
 import { api, ApiError } from '../api/client';
 import type { CreatePriceSnapshot, Holding, Quote } from '../api/types';
 import { tickerToMarketSymbol } from '../lib/symbols';
+import { today } from '../lib/dates';
 
 interface UpdatePricesModalProps {
   holdings: Holding[];
   onClose: () => void;
-}
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 export default function UpdatePricesModal({ holdings, onClose }: UpdatePricesModalProps) {

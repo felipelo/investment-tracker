@@ -12,14 +12,11 @@ import {
 import { ApiError } from '../api/client';
 import type { Action, CreateSecurityTransaction, SecurityTransaction } from '../api/types';
 import { ACTIONS, actionMeta, fieldGroupFor } from '../lib/actions';
+import { today } from '../lib/dates';
 import { usePortfolioContext } from '../context/PortfolioContext';
 import AddSecurityModal from '../components/AddSecurityModal';
 import AccountFormModal from '../components/AccountFormModal';
 import RecentTransactions from '../components/RecentTransactions';
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 interface FormState {
   date: string;

@@ -3,3 +3,5 @@ target/
 *.iml
 .env
 *.log
+# Built by the frontend stage of the Dockerfiles, never committed.
+src/main/resources/static/

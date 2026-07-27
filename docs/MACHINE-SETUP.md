@@ -83,10 +83,31 @@ pip install -r requirements.txt
 
 Secrets go through the environment only — never into `application.yml`.
 
-| Variable | Needed for | Default |
-|---|---|---|
-| `ALPHAVANTAGE_API_KEY` | live quotes (`/api/v1/quotes`) | empty, quotes disabled |
-| `POSTGRES_HOST` / `POSTGRES_PORT` / `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | overriding the database connection | `localhost` / `5432` / `investment_tracker` (all three) |
+The default configuration is the deployable one: it has no host and no credential fallbacks, so a
+missing variable fails startup instead of quietly connecting somewhere unintended. The `local`
+profile supplies laptop defaults for all of them, which is why section 7 needs none of this.
+
+| Variable | Needed for | Default | Default under `local` |
+|---|---|---|---|
+| `POSTGRES_HOST` | database connection | none — required | `localhost` |
+| `POSTGRES_PORT` | database connection | `5432` | `5432` |
+| `POSTGRES_DB` | database connection | `investment_tracker` | `investment_tracker` |
+| `POSTGRES_USER` | database connection | none — required | `investment_tracker` |
+| `POSTGRES_PASSWORD` | database connection | none — required | `investment_tracker` |
+| `APP_AUTH_USERNAME` | HTTP Basic login | none — required | auth disabled |
+| `APP_AUTH_PASSWORD_HASH` | HTTP Basic login (bcrypt digest, never plaintext) | none — required | auth disabled |
+| `ALPHAVANTAGE_API_KEY` | live quotes (`/api/v1/quotes`) | empty, quotes disabled | same |
+| `TZ` | the date `LocalDate.now()` reports | the container's zone (UTC) | the host's zone |
+
+Every endpoint except `/actuator/health` requires the single `APP_AUTH_USERNAME` credential. Generate
+its bcrypt hash without installing anything:
+
+```bash
+docker run --rm httpd:alpine htpasswd -nbBC 10 "" 'your-password' | cut -d: -f2
+```
+
+`TZ` matters because the dashboard's "today" and the default tax year come from the JVM's zone. Both
+images set `TZ=America/Toronto`; override it if you track a different jurisdiction.
 
 ---
 
@@ -106,6 +127,16 @@ SPRING_PROFILES_ACTIVE=local ./target/investment-tracker
 cd ../frontend && npm run dev                                   # Vite dev server
 ```
 
+The `local` profile turns authentication off, so the dev flow needs no credentials. Containers run
+without that profile and therefore always require them.
+
+To run the whole thing the way it deploys — one container serving both the SPA and the API on
+`:8080`, no Vite proxy — build from the repository root:
+
+```bash
+docker build -f backend/Dockerfile -t investment-tracker:jvm .
+```
+
 The static mock pages in [`mock/`](../mock) are plain HTML — open them directly in a browser.
 
 API docs live at `http://localhost:8080/swagger-ui.html` once the backend is up.
@@ -120,7 +151,7 @@ native-image --version # native-image 25.0.2 ... GraalVM CE
 docker info            # Server Version + Total Memory >= 8 GiB
 node -v                # v24.x
 python3 -V             # Python 3.x
-cd backend && ./mvnw verify   # 105 tests, BUILD SUCCESS
+cd backend && ./mvnw verify   # 113 tests, BUILD SUCCESS
 ```
 
 If `./mvnw verify` passes you have a working build environment; if `native-image --version` also

@@ -16,3 +16,9 @@ spring:
           provider: none
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+
+app:
+  auth:
+    # The existing controller tests assert on payloads, not on authentication. SecurityConfigTest
+    # turns auth back on with @TestPropertySource so the protected chain stays covered.
+    enabled: false

@@ -1,0 +1,16 @@
+# The image build context is the repository root so the SPA and the API build together.
+.git/
+.idea/
+*.iml
+*.log
+.env
+.DS_Store
+**/target/
+**/node_modules/
+frontend/dist/
+# Rebuilt by the frontend stage; a stale host copy must never be baked in.
+backend/src/main/resources/static/
+scripts/.venv/
+mock/
+docs/
+**/*.md

@@ -13,12 +13,9 @@ import {
 import { ApiError } from '../api/client';
 import type { CreateDividend, Dividend, SecurityTransaction } from '../api/types';
 import { formatMoney } from '../lib/actions';
+import { today } from '../lib/dates';
 import { usePortfolioContext } from '../context/PortfolioContext';
 import DividendsList from '../components/DividendsList';
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 interface FormState {
   paymentDate: string;

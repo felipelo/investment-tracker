@@ -1,22 +1,47 @@
 # Native image: GraalVM ahead-of-time compilation to a standalone binary.
 # Slow to build and memory-hungry, but tiny runtime image and fast startup.
+#
+# The build context is the repository root, because the image bundles the SPA:
+#   docker build -f backend/Dockerfile.native -t investment-tracker:native .
+
+# --- Frontend stage ---
+FROM node:24 AS web
+WORKDIR /web
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
 
 # --- Native build stage ---
 FROM ghcr.io/graalvm/graalvm-community:25 AS build
 WORKDIR /workspace
 
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
+COPY backend/.mvn/ .mvn/
+COPY backend/mvnw backend/pom.xml ./
 RUN ./mvnw -B dependency:go-offline
 
-COPY src/ src/
+COPY backend/src/ src/
+# Serving the bundle from the API's own origin is what lets the SPA keep its relative
+# /api/v1 base URL: no CORS, no second host, one credential prompt.
+COPY --from=web /web/dist/ src/main/resources/static/
 # The `native` profile is provided by spring-boot-starter-parent.
 RUN ./mvnw -B -Pnative native:compile -DskipTests
 
 # --- Runtime stage ---
-# distroless/base provides glibc + libssl for the dynamically linked binary.
-FROM gcr.io/distroless/base-debian12 AS runtime
+# distroless/base provides glibc, libssl and tzdata for the dynamically linked binary;
+# the :nonroot tag runs as uid 65532. It does not ship zlib, which the binary needs for
+# java.util.zip, so the one missing library is lifted from the matching Debian release
+# rather than trading distroless for a full base image over a single .so.
+FROM debian:12-slim AS libs
+
+FROM gcr.io/distroless/base-debian12:nonroot AS runtime
+COPY --from=libs /usr/lib/*-linux-gnu/libz.so.1* /usr/lib/
 WORKDIR /app
+# LocalDate.now() / Year.now() decide the dashboard's "today" and the default tax year, so the
+# process zone has to be the one the records are kept in rather than the container default (UTC).
+ENV TZ=America/Toronto
 COPY --from=build /workspace/target/investment-tracker app
+# No HEALTHCHECK: distroless has no shell or HTTP client by design. Point the orchestrator's
+# HTTP probe at /actuator/health/readiness instead.
 EXPOSE 8080
 ENTRYPOINT ["/app/app"]

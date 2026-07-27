@@ -16,6 +16,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * ponytail: the quote cache and the rate limiter both live in this instance, which is correct for
+ * exactly one replica. The ceiling is a second replica: the cache would miss half the time and the
+ * two throttles would independently pace requests, so the pair could exceed Alpha Vantage's ~1
+ * request/second free tier. Upgrade path is a shared cache and a shared token bucket.
+ */
 @Service
 public class QuoteService {
 

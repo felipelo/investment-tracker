@@ -16,13 +16,10 @@ import type {
 } from '../api/types';
 import { formatGainLoss } from '../lib/actions';
 import { CASH_TYPES, PURPOSES, requiresCounterparty } from '../lib/cashTypes';
+import { today } from '../lib/dates';
 import { usePortfolioContext } from '../context/PortfolioContext';
 import AccountFormModal from '../components/AccountFormModal';
 import CashTransactionsList from '../components/CashTransactionsList';
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 interface FormState {
   date: string;
