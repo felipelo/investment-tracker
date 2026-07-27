@@ -100,16 +100,22 @@ class DashboardControllerTest {
                 // 2500 - 2400 = 100; 100 / 2400 = 4.17%
                 .andExpect(jsonPath("$.todaysReturn.available").value(true))
                 .andExpect(jsonPath("$.todaysReturn.amount").value(100.0000))
+                // Today column mirrors the dashboard's day-over-day price return.
+                .andExpect(jsonPath("$.periodReturns", hasSize(5)))
+                .andExpect(jsonPath("$.periodReturns[0].label").value("Today"))
+                .andExpect(jsonPath("$.periodReturns[0].available").value(true))
+                .andExpect(jsonPath("$.periodReturns[0].priceAmount").value(100.0000))
+                .andExpect(jsonPath("$.periodReturns[0].dividendAmount").value(0.0000))
+                .andExpect(jsonPath("$.periodReturns[0].amount").value(100.0000))
                 // One Year column: price 500 (2500 - 2000) + dividend 50 = 550 total
-                .andExpect(jsonPath("$.periodReturns", hasSize(4)))
-                .andExpect(jsonPath("$.periodReturns[3].label").value("One Year"))
-                .andExpect(jsonPath("$.periodReturns[3].available").value(true))
-                .andExpect(jsonPath("$.periodReturns[3].amount").value(550.0000))
-                .andExpect(jsonPath("$.periodReturns[3].pct").value(27.5))
-                .andExpect(jsonPath("$.periodReturns[3].priceAmount").value(500.0000))
-                .andExpect(jsonPath("$.periodReturns[3].pricePct").value(25.00))
-                .andExpect(jsonPath("$.periodReturns[3].dividendAmount").value(50.0000))
-                .andExpect(jsonPath("$.periodReturns[3].dividendPct").value(2.5))
+                .andExpect(jsonPath("$.periodReturns[4].label").value("One Year"))
+                .andExpect(jsonPath("$.periodReturns[4].available").value(true))
+                .andExpect(jsonPath("$.periodReturns[4].amount").value(550.0000))
+                .andExpect(jsonPath("$.periodReturns[4].pct").value(27.5))
+                .andExpect(jsonPath("$.periodReturns[4].priceAmount").value(500.0000))
+                .andExpect(jsonPath("$.periodReturns[4].pricePct").value(25.00))
+                .andExpect(jsonPath("$.periodReturns[4].dividendAmount").value(50.0000))
+                .andExpect(jsonPath("$.periodReturns[4].dividendPct").value(2.5))
                 // single holding => 100% allocation
                 .andExpect(jsonPath("$.allocation", hasSize(1)))
                 .andExpect(jsonPath("$.allocation[0].ticker").value("TSE:XEI"))
@@ -121,10 +127,12 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.holdingBreakdowns[0].priceReturn.pct").value(25.00))
                 .andExpect(jsonPath("$.holdingBreakdowns[0].dividendReturn.amount").value(50.0000))
                 .andExpect(jsonPath("$.holdingBreakdowns[0].dividendReturn.pct").value(2.5))
-                .andExpect(jsonPath("$.holdingBreakdowns[0].periodReturns[3].priceAmount").value(500.0000))
-                .andExpect(jsonPath("$.holdingBreakdowns[0].periodReturns[3].pricePct").value(25.00))
-                .andExpect(jsonPath("$.holdingBreakdowns[0].periodReturns[3].dividendAmount").value(50.0000))
-                .andExpect(jsonPath("$.holdingBreakdowns[0].periodReturns[3].dividendPct").value(2.5));
+                .andExpect(jsonPath("$.holdingBreakdowns[0].periodReturns[0].priceAmount").value(100.0000))
+                .andExpect(jsonPath("$.holdingBreakdowns[0].periodReturns[0].dividendAmount").value(0.0000))
+                .andExpect(jsonPath("$.holdingBreakdowns[0].periodReturns[4].priceAmount").value(500.0000))
+                .andExpect(jsonPath("$.holdingBreakdowns[0].periodReturns[4].pricePct").value(25.00))
+                .andExpect(jsonPath("$.holdingBreakdowns[0].periodReturns[4].dividendAmount").value(50.0000))
+                .andExpect(jsonPath("$.holdingBreakdowns[0].periodReturns[4].dividendPct").value(2.5));
     }
 
     @Test

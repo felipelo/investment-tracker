@@ -20,22 +20,41 @@ interface Column {
 
 function buildColumns(
   periodReturns: PeriodReturn[],
+  todaysReturn: ReturnFigure | undefined,
   allTimePrice: ReturnFigure,
   allTimeDividend: ReturnFigure,
   allTimeTotal: { amount: string | null; pct: string | null; available: boolean },
 ): Column[] {
+  const today = periodReturns.find((period) => period.label === 'Today');
+  const remainingPeriods = periodReturns.filter((period) => period.label !== 'Today');
+  const toColumn = (period: PeriodReturn): Column => ({
+    label: period.label,
+    price: period.priceAmount,
+    pricePct: period.pricePct,
+    dividend: period.dividendAmount,
+    dividendPct: period.dividendPct,
+    total: period.amount,
+    pct: period.pct,
+    available: period.available,
+    isAllTime: false,
+  });
+  const todayColumn: Column = today
+    ? toColumn(today)
+    : {
+        label: 'Today',
+        price: todaysReturn?.amount ?? null,
+        pricePct: todaysReturn?.pct ?? null,
+        dividend: null,
+        dividendPct: null,
+        total: todaysReturn?.amount ?? null,
+        pct: todaysReturn?.pct ?? null,
+        available: todaysReturn?.available ?? false,
+        isAllTime: false,
+      };
+
   return [
-    ...periodReturns.map((period) => ({
-      label: period.label,
-      price: period.priceAmount,
-      pricePct: period.pricePct,
-      dividend: period.dividendAmount,
-      dividendPct: period.dividendPct,
-      total: period.amount,
-      pct: period.pct,
-      available: period.available,
-      isAllTime: false,
-    })),
+    todayColumn,
+    ...remainingPeriods.map(toColumn),
     {
       label: 'All-time',
       price: allTimePrice.amount,
@@ -80,12 +99,13 @@ const numClass = (isAllTime: boolean) => (isAllTime ? 'num mono col-alltime' : '
 
 export default function ReturnBreakdownTable({ dashboard }: ReturnBreakdownTableProps) {
   const [expanded, setExpanded] = useState<{ price: boolean; dividend: boolean }>({
-    price: false,
+    price: true,
     dividend: false,
   });
 
   const columns = buildColumns(
     dashboard.periodReturns,
+    dashboard.todaysReturn,
     dashboard.priceReturn,
     dashboard.dividendReturn,
     dashboard.allTimeReturn,
@@ -95,6 +115,7 @@ export default function ReturnBreakdownTable({ dashboard }: ReturnBreakdownTable
     holding,
     columns: buildColumns(
       holding.periodReturns,
+      undefined,
       holding.priceReturn,
       holding.dividendReturn,
       // Sub-rows only surface the price or dividend cell, so the total column is unused here.
@@ -118,7 +139,7 @@ export default function ReturnBreakdownTable({ dashboard }: ReturnBreakdownTable
             <AmountWithPct
               value={metric === 'price' ? column.price : column.dividend}
               pct={metric === 'price' ? column.pricePct : column.dividendPct}
-              available={column.available}
+              available={metric === 'price' ? column.price !== null : column.dividend !== null}
             />
           </td>
         ))}
@@ -161,7 +182,7 @@ export default function ReturnBreakdownTable({ dashboard }: ReturnBreakdownTable
                   <AmountWithPct
                     value={column.price}
                     pct={column.pricePct}
-                    available={column.available}
+                    available={column.price !== null}
                   />
                 </td>
               ))}
@@ -191,7 +212,7 @@ export default function ReturnBreakdownTable({ dashboard }: ReturnBreakdownTable
                   <AmountWithPct
                     value={column.dividend}
                     pct={column.dividendPct}
-                    available={column.available}
+                    available={column.dividend !== null}
                   />
                 </td>
               ))}
@@ -201,7 +222,11 @@ export default function ReturnBreakdownTable({ dashboard }: ReturnBreakdownTable
               <td className="row-label">Total return</td>
               {columns.map((column) => (
                 <td key={column.label} className={numClass(column.isAllTime)}>
-                  <AmountWithPct value={column.total} pct={column.pct} available={column.available} />
+                  <AmountWithPct
+                    value={column.total}
+                    pct={column.pct}
+                    available={column.total !== null}
+                  />
                 </td>
               ))}
             </tr>

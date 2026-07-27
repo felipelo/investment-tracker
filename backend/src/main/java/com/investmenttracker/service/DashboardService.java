@@ -368,6 +368,7 @@ public class DashboardService {
 
     private List<PeriodSpec> periodSpecs(LocalDate today) {
         return List.of(
+                new PeriodSpec("Today", today.minusDays(1)),
                 new PeriodSpec("5 Days", today.minusDays(5)),
                 new PeriodSpec("One Month", today.minus(Period.ofMonths(1))),
                 new PeriodSpec("Six Month", today.minus(Period.ofMonths(6))),
