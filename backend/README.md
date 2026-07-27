@@ -222,4 +222,4 @@ These decisions do not require feature requirements and are worth locking in ear
 | Postgres / migrations | Compose + datasource config; no schema yet |
 | Docker / native image | Both images build from the repository root and were run end to end: startup with no profile, anonymous health probes, Basic auth on everything else, SPA deep links, non-root, `TZ` honoured |
 
-Next step when ready: choose the AWS topology.
+AWS deploy (App Runner + RDS, single container): [docs/AWS-DEPLOYMENT.md](../docs/AWS-DEPLOYMENT.md).

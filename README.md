@@ -6,8 +6,11 @@ This repository currently contains requirements only. See [REQUIREMENTS.md](REQU
 
 To get a machine ready to build and run this repo, see [docs/MACHINE-SETUP.md](docs/MACHINE-SETUP.md).
 
+To deploy to AWS (App Runner + RDS), see [docs/AWS-DEPLOYMENT.md](docs/AWS-DEPLOYMENT.md).
+
 ## Implementation plans
 
 | Plan | Status |
 |------|--------|
 | [Holdings page](docs/HOLDINGS-PLAN.md) | Approved — second vertical slice after Record Trade |
+| [AWS App Runner deployment](docs/AWS-DEPLOYMENT-PLAN.md) | Done — guide at [docs/AWS-DEPLOYMENT.md](docs/AWS-DEPLOYMENT.md) |
