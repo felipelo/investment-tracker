@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 # Native image: GraalVM ahead-of-time compilation to a standalone binary.
 # Slow to build and memory-hungry, but tiny runtime image and fast startup.
 

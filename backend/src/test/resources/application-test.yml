@@ -8,5 +8,11 @@ spring:
     hibernate:
       ddl-auto: none
     open-in-view: false
+    properties:
+      hibernate:
+        # Mirror the native image, which has no runtime bytecode provider, so the test suite fails
+        # on anything that would need a runtime-generated Hibernate proxy.
+        bytecode:
+          provider: none
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml

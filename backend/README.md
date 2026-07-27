@@ -10,10 +10,11 @@ Functional scope is intentionally **not** defined here yet. This document captur
 
 | Layer | Choice | Notes |
 |-------|--------|-------|
-| Language | **Java 25** | LTS-aligned toolchain; pin exact JDK in build and Docker |
-| Framework | **Spring Boot** | Web layer, dependency injection, configuration, data access |
-| Build | **Maven** | Standard layout; reproducible builds for CI and native image |
-| Database | **PostgreSQL** | Primary persistent store; version TBD |
+| Language | **Java 25** | `java.version` 25; native builds require GraalVM 25 |
+| Framework | **Spring Boot 4.1** | Spring Framework 7, Jackson 3, Hibernate 7.4 |
+| Build | **Maven** | Wrapper committed; same commands locally and in CI |
+| Database | **PostgreSQL 17** | Schema managed by Liquibase; auditing via Hibernate Envers |
+| API docs | **springdoc-openapi 3** | `/v3/api-docs`, `/swagger-ui.html` |
 | Packaging | **Docker** | Multi-stage build targeting a **GraalVM native image** for a small, fast-starting runtime |
 
 ---
@@ -65,7 +66,7 @@ Two multi-stage Dockerfiles are provided. Both build with the committed Maven wr
 | `Dockerfile` | JVM fat-jar on `eclipse-temurin:25-jre` | fast | larger | normal |
 | `Dockerfile.native` | GraalVM native binary on `distroless/base` | slow, memory-hungry | tiny | very fast |
 
-The `native` profile is supplied by `spring-boot-starter-parent`; no extra plugin config is needed in `pom.xml`.
+The `native` profile is supplied by `spring-boot-starter-parent`, so it only needs the `native-maven-plugin` build args in `pom.xml`, not the full plugin setup.
 
 ### Build the images
 
@@ -76,6 +77,9 @@ docker build -t investment-tracker:jvm .
 # Native image (GraalVM AOT — expect several minutes and high RAM)
 docker build -f Dockerfile.native -t investment-tracker:native .
 ```
+
+Both need to pull base images from `ghcr.io`, `gcr.io`, and Docker Hub. On a restricted network the
+build hangs on the pull; use the local GraalVM build below instead.
 
 ### Run a built image against local Postgres
 
@@ -96,14 +100,57 @@ docker compose up                          # Postgres only (default)
 
 ### Native build locally (without Docker)
 
-Requires a local GraalVM 25 with `native-image` on `PATH`:
+Requires GraalVM 25 — see [docs/MACHINE-SETUP.md](../docs/MACHINE-SETUP.md).
 
 ```bash
-./mvnw -Pnative native:compile
-./target/investment-tracker
+export JAVA_HOME=~/.local/graalvm/graalvm-community-openjdk-25.0.2+10.1/Contents/Home
+./mvnw -Pnative native:compile -DskipTests
+SPRING_PROFILES_ACTIVE=local ./target/investment-tracker
 ```
 
-Tradeoffs (native compile time, reflection/resource hints, JDBC driver compatibility) will be recorded here after the first real native build against actual code.
+### Smoke test a native binary
+
+Migrations, JSON, and the Envers audit trail are the parts most likely to break under AOT, so exercise
+all three. Against a throwaway database (leaves your dev data alone):
+
+```bash
+docker run --rm -d --name it-smoke -p 5433:5432 \
+  -e POSTGRES_DB=investment_tracker -e POSTGRES_USER=investment_tracker \
+  -e POSTGRES_PASSWORD=investment_tracker postgres:17
+
+SPRING_PROFILES_ACTIVE=local POSTGRES_PORT=5433 ./target/investment-tracker &
+
+curl -s localhost:8080/api/v1/securities                    # Liquibase seed data
+curl -s -X POST localhost:8080/api/v1/security-transactions -H 'Content-Type: application/json' \
+  -d '{"date":"2026-02-02","securityId":1,"accountId":1,"action":"BUY","shares":10,"pricePerShare":25.50,"commission":4.95}'
+docker exec it-smoke psql -tAU investment_tracker -d investment_tracker \
+  -c "select (select count(*) from revinfo), (select count(*) from security_transaction_aud)"
+```
+
+The last query must return non-zero counts — that is the proof Envers still audits in the native image.
+
+### Recorded tradeoffs
+
+Measured on an Apple Silicon Mac with GraalVM CE 25.0.2:
+
+| | JVM | Native |
+|---|---|---|
+| Build | ~17 s (`./mvnw verify`, 105 tests) | ~2 min 20 s compile, peak ~7.6 GB RSS |
+| Artifact | ~60 MB fat jar + JRE base image | 211 MB binary, distroless runtime image |
+| Startup | seconds | **0.9 s** |
+
+Two AOT constraints are baked into the build:
+
+- **No runtime bytecode provider.** Native images disable Hibernate's ByteBuddy provider, so lazy
+  `@ManyToOne` associations and `getReferenceById()` cannot create proxies at runtime. The
+  `hibernate-maven-plugin` enhances the entities at build time instead. The `test` profile sets
+  `hibernate.bytecode.provider: none` so `./mvnw verify` fails on the JVM if new code reintroduces a
+  runtime-proxy dependency.
+- **Liquibase reflection.** The GraalVM metadata repository does not cover the accessors Liquibase
+  reflects on while parsing changesets, so the build passes `-H:Preserve=package=liquibase.*`. It
+  costs ~14 MB of image size and can be dropped once upstream metadata covers Liquibase 5.x.
+
+Envers, springdoc, Jackson 3, and the PostgreSQL driver needed no hints of their own.
 
 ---
 
@@ -147,6 +194,6 @@ These decisions do not require feature requirements and are worth locking in ear
 | Maven project | Scaffolded (wrapper committed) |
 | Spring Boot app | Minimal (entrypoint only, no endpoints) |
 | Postgres / migrations | Compose + datasource config; no schema yet |
-| Docker / native image | `Dockerfile` + `Dockerfile.native` ready |
+| Docker / native image | `Dockerfile` + `Dockerfile.native` ready; native binary built and smoke-tested locally (container build unverified — registries unreachable here) |
 
-Next step when ready: add a migration tool (Flyway/Liquibase) and the first health/readiness endpoint, then validate a real native build.
+Next step when ready: add the first health/readiness endpoint.

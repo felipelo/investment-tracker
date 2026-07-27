@@ -4,6 +4,8 @@ A personal, local-first Canadian investment and Smith Maneuver tracker. It manag
 
 This repository currently contains requirements only. See [REQUIREMENTS.md](REQUIREMENTS.md) for the full specification.
 
+To get a machine ready to build and run this repo, see [docs/MACHINE-SETUP.md](docs/MACHINE-SETUP.md).
+
 ## Implementation plans
 
 | Plan | Status |

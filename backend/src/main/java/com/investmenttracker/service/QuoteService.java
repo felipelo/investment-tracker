@@ -1,6 +1,6 @@
 package com.investmenttracker.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.investmenttracker.web.dto.QuoteResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

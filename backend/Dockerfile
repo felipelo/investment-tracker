@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 # JVM image: standard fat-jar build. Fast to build, larger runtime than native.
 
 # --- Build stage ---
