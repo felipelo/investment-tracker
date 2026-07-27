@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface SmithManeuverFlowRepository extends JpaRepository<SmithManeuverFlow, Long> {
@@ -19,4 +20,6 @@ public interface SmithManeuverFlowRepository extends JpaRepository<SmithManeuver
     List<SmithManeuverFlow> findByPortfolioIdWithSteps(@Param("portfolioId") Long portfolioId);
 
     boolean existsByHelocAccountId(Long accountId);
+
+    boolean existsByStepsCashTransactionIdIn(Collection<Long> cashTransactionIds);
 }

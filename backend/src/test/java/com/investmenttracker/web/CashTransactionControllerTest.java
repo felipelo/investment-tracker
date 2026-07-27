@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.hasItem;
@@ -213,6 +214,48 @@ class CashTransactionControllerTest {
         mockMvc.perform(get("/api/v1/cash-transactions").param("portfolioId", String.valueOf(portfolioId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void editingFlowLinkedTransferKeepsLegIdsAndDeleteStaysBlocked() throws Exception {
+        var heloc = createAccount("Manulife HELOC", "HELOC");
+        var margin = createAccount("Questrade Margin", "Margin");
+        var created = mockMvc.perform(post("/api/v1/cash-transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                transferBody(heloc.getId(), margin.getId(), "TRANSFER", "2026-04-01", "10000.00"))))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long drawId = objectMapper.readTree(created).get("id").asLong();
+
+        var flow = new LinkedHashMap<String, Object>();
+        flow.put("portfolioId", portfolioId());
+        flow.put("helocAccountId", heloc.getId());
+        flow.put("label", "Draw to margin");
+        flow.put("investmentUseAmount", "10000.00");
+        flow.put("cashTransactionIds", List.of(drawId));
+        mockMvc.perform(post("/api/v1/smith-maneuver-flows")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(flow)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(put("/api/v1/cash-transactions/{id}", drawId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                transferBody(heloc.getId(), margin.getId(), "TRANSFER", "2026-04-02", "12000.00"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(drawId))
+                .andExpect(jsonPath("$.amount").value(-12000.0000));
+
+        mockMvc.perform(get("/api/v1/cash-transactions").param("portfolioId", String.valueOf(portfolioId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[?(@.accountId == " + margin.getId() + ")].amount", hasItem(12000.0)));
+
+        mockMvc.perform(delete("/api/v1/cash-transactions/{id}", drawId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.cashTransaction")
+                        .value("Cannot delete a cash transaction used by a Smith Maneuver flow"));
     }
 
     @Test

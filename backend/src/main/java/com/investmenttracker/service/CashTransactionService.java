@@ -10,6 +10,7 @@ import com.investmenttracker.repository.CashTransactionRepository;
 import com.investmenttracker.repository.DividendRepository;
 import com.investmenttracker.repository.PortfolioRepository;
 import com.investmenttracker.repository.SecurityTransactionRepository;
+import com.investmenttracker.repository.SmithManeuverFlowRepository;
 import com.investmenttracker.web.dto.CashTransactionResponse;
 import com.investmenttracker.web.dto.CreateCashTransactionRequest;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -35,19 +37,22 @@ public class CashTransactionService {
     private final PortfolioRepository portfolioRepository;
     private final SecurityTransactionRepository securityTransactionRepository;
     private final DividendRepository dividendRepository;
+    private final SmithManeuverFlowRepository flowRepository;
 
     public CashTransactionService(
             CashTransactionRepository cashTransactionRepository,
             AccountRepository accountRepository,
             PortfolioRepository portfolioRepository,
             SecurityTransactionRepository securityTransactionRepository,
-            DividendRepository dividendRepository
+            DividendRepository dividendRepository,
+            SmithManeuverFlowRepository flowRepository
     ) {
         this.cashTransactionRepository = cashTransactionRepository;
         this.accountRepository = accountRepository;
         this.portfolioRepository = portfolioRepository;
         this.securityTransactionRepository = securityTransactionRepository;
         this.dividendRepository = dividendRepository;
+        this.flowRepository = flowRepository;
     }
 
     @Transactional(readOnly = true)
@@ -176,12 +181,55 @@ public class CashTransactionService {
         return persistLegs(request);
     }
 
+    /**
+     * Edits the existing rows in place whenever the leg shape survives the edit, so ids stay stable for
+     * Smith Maneuver flow steps that reference them, {@code createdAt} keeps its ledger ordering, and the
+     * audit trail records a modification instead of a delete plus an insert.
+     */
     public CashTransaction update(Long id, CreateCashTransactionRequest request) {
         validate(request);
         var existing = cashTransactionRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("CashTransaction", id));
+
+        var updated = updateInPlace(groupOf(existing), request);
+        if (updated != null) {
+            return updated;
+        }
+        // The leg count changed (single <-> transfer), so the rows have to be replaced.
         deleteGroup(existing);
         return persistLegs(request);
+    }
+
+    /** Returns the updated primary leg, or null when the request no longer fits the stored legs. */
+    private CashTransaction updateInPlace(List<CashTransaction> legs, CreateCashTransactionRequest request) {
+        var account = requireAccount(request.accountId());
+
+        if (!request.type().requiresCounterparty()) {
+            return legs.size() == 1
+                    ? applyLeg(legs.getFirst(), request, account, null,
+                            signedAmount(request.type(), request.amount()), null)
+                    : null;
+        }
+        if (legs.size() != 2) {
+            return null;
+        }
+        var source = legWithSign(legs, -1);
+        var dest = legWithSign(legs, 1);
+        if (source == null || dest == null) {
+            return null;
+        }
+
+        var counterparty = requireAccount(request.counterpartyAccountId());
+        var groupId = source.getTransferGroupId();
+        applyLeg(dest, request, counterparty, account, request.amount(), groupId);
+        return applyLeg(source, request, account, counterparty, request.amount().negate(), groupId);
+    }
+
+    private static CashTransaction legWithSign(List<CashTransaction> legs, int signum) {
+        return legs.stream()
+                .filter(leg -> leg.getAmount().signum() == signum)
+                .findFirst()
+                .orElse(null);
     }
 
     public void delete(Long id) {
@@ -197,25 +245,25 @@ public class CashTransactionService {
         if (request.type().requiresCounterparty()) {
             var counterparty = requireAccount(request.counterpartyAccountId());
             var groupId = UUID.randomUUID().toString();
-            var sourceLeg = buildLeg(request, account, counterparty, magnitude.negate(), groupId);
-            var destLeg = buildLeg(request, counterparty, account, magnitude, groupId);
+            var sourceLeg = applyLeg(new CashTransaction(), request, account, counterparty, magnitude.negate(), groupId);
+            var destLeg = applyLeg(new CashTransaction(), request, counterparty, account, magnitude, groupId);
             var savedSource = cashTransactionRepository.save(sourceLeg);
             cashTransactionRepository.save(destLeg);
             return savedSource;
         }
 
-        var leg = buildLeg(request, account, null, signedAmount(request.type(), magnitude), null);
+        var leg = applyLeg(new CashTransaction(), request, account, null, signedAmount(request.type(), magnitude), null);
         return cashTransactionRepository.save(leg);
     }
 
-    private CashTransaction buildLeg(
+    private CashTransaction applyLeg(
+            CashTransaction leg,
             CreateCashTransactionRequest request,
             Account account,
             Account counterparty,
             BigDecimal amount,
             String transferGroupId
     ) {
-        var leg = new CashTransaction();
         leg.setAccount(account);
         leg.setCounterpartyAccount(counterparty);
         leg.setType(request.type());
@@ -228,12 +276,20 @@ public class CashTransactionService {
     }
 
     private void deleteGroup(CashTransaction transaction) {
-        if (transaction.getTransferGroupId() != null) {
-            cashTransactionRepository.deleteAll(
-                    cashTransactionRepository.findByTransferGroupId(transaction.getTransferGroupId()));
-        } else {
-            cashTransactionRepository.delete(transaction);
+        var legs = groupOf(transaction);
+        if (flowRepository.existsByStepsCashTransactionIdIn(legs.stream().map(CashTransaction::getId).toList())) {
+            throw new ValidationException(Map.of(
+                    "cashTransaction", "Cannot delete a cash transaction used by a Smith Maneuver flow"
+            ));
         }
+        cashTransactionRepository.deleteAll(legs);
+    }
+
+    /** Both legs of a transfer, or the single leg of any other type. */
+    private List<CashTransaction> groupOf(CashTransaction transaction) {
+        return transaction.getTransferGroupId() == null
+                ? List.of(transaction)
+                : cashTransactionRepository.findByTransferGroupId(transaction.getTransferGroupId());
     }
 
     private static BigDecimal signedAmount(CashTransactionType type, BigDecimal magnitude) {
