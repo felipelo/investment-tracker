@@ -124,7 +124,7 @@ docker compose up                          # Postgres only (default)
 Requires GraalVM 25 — see [docs/MACHINE-SETUP.md](../docs/MACHINE-SETUP.md).
 
 ```bash
-export JAVA_HOME=~/.local/graalvm/graalvm-community-openjdk-25.0.2+10.1/Contents/Home
+sdk use java 25.0.2-graalce
 ./mvnw -Pnative native:compile -DskipTests
 SPRING_PROFILES_ACTIVE=local ./target/investment-tracker
 ```
