@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -18,6 +19,21 @@ public interface CashTransactionRepository extends JpaRepository<CashTransaction
             ORDER BY c.date DESC, c.id DESC
             """)
     List<CashTransaction> findByPortfolioId(@Param("portfolioId") Long portfolioId);
+
+    @Query("""
+            SELECT c FROM CashTransaction c
+            JOIN FETCH c.account a
+            WHERE c.type IN (com.investmenttracker.domain.CashTransactionType.FEE,
+                             com.investmenttracker.domain.CashTransactionType.INTEREST_CHARGE,
+                             com.investmenttracker.domain.CashTransactionType.INTEREST_PAYMENT)
+              AND (:portfolioId IS NULL OR a.portfolio.id = :portfolioId)
+              AND c.date >= :from
+            ORDER BY c.date DESC, c.id DESC
+            """)
+    List<CashTransaction> findFeeAndInterestSince(
+            @Param("portfolioId") Long portfolioId,
+            @Param("from") LocalDate from
+    );
 
     @Query("""
             SELECT c.account.id, SUM(c.amount) FROM CashTransaction c

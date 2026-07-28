@@ -19,6 +19,21 @@ public interface DividendRepository extends JpaRepository<Dividend, Long> {
             """)
     List<Dividend> findByPortfolioIdOrderByPaymentDateDesc(@Param("portfolioId") Long portfolioId);
 
+    /** Cash-landing payments only: a reinvested dividend never becomes spendable money. */
+    @Query("""
+            SELECT d FROM Dividend d
+            JOIN FETCH d.security
+            JOIN FETCH d.portfolio
+            WHERE (:portfolioId IS NULL OR d.portfolio.id = :portfolioId)
+              AND d.drip = false
+              AND d.paymentDate >= :from
+            ORDER BY d.paymentDate DESC, d.id DESC
+            """)
+    List<Dividend> findSince(
+            @Param("portfolioId") Long portfolioId,
+            @Param("from") java.time.LocalDate from
+    );
+
     @Query("""
             SELECT d FROM Dividend d
             JOIN FETCH d.security

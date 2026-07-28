@@ -432,3 +432,34 @@ export interface TaxSummary {
     ytd: InterestMonthRow;
   };
 }
+
+export type CashFlowCategory = 'DIVIDEND' | 'INTEREST' | 'FEE';
+
+export interface CashFlowWeekBucket {
+  weekStart: string;
+  in: string;
+  out: string;
+  runningTotal: string;
+}
+
+/** `amount` is signed: positive lands as cash, negative leaves. */
+export interface CashFlowEvent {
+  date: string;
+  label: string;
+  category: CashFlowCategory;
+  amount: string;
+  runningTotal: string;
+}
+
+export interface CashFlowOutlook {
+  from: string;
+  to: string;
+  moneyIn: string;
+  moneyOut: string;
+  net: string;
+  lowestRunningTotal: string;
+  lowestOn: string | null;
+  weeks: CashFlowWeekBucket[];
+  events: CashFlowEvent[];
+  warnings: string[];
+}

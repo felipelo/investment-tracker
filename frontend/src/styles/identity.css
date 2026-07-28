@@ -763,3 +763,137 @@ tr:hover td { background: var(--bg); }
   flex: 1;
   min-width: 0;
 }
+
+/* Cash flow outlook card */
+.cf-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.875rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.cf-totals {
+  display: flex;
+  align-items: flex-end;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.cf-total {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.cf-total-key {
+  font-size: 1.5rem;
+  padding-left: 2rem;
+  border-left: 1px solid var(--border);
+}
+
+.cf-total-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
+}
+
+.cf-total-label .legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+/* The chart gets the wider column; the list beside it carries the exact figures. */
+.cf-split {
+  display: grid;
+  grid-template-columns: minmax(340px, 6fr) 5fr;
+  gap: 1.75rem;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .cf-split { grid-template-columns: 1fr; }
+}
+
+.cf-legend {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.swatch-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.swatch-line {
+  display: inline-block;
+  width: 16px;
+  height: 0;
+  border-top: 2px dashed var(--lavender-deep);
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* Scrolling the schedule keeps the card a fixed height whatever the event count */
+.cf-schedule {
+  max-height: 268px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.cf-table th,
+.cf-table td { padding: 0.5rem 0.75rem; }
+
+/* Figures never wrap; the What column absorbs a narrow card instead. */
+.cf-table th.num,
+.cf-table td.num { text-align: right; white-space: nowrap; }
+
+.cf-table .nowrap { white-space: nowrap; }
+
+/* A border-bottom does not stick, so the header rule is an inset shadow instead. */
+.cf-schedule thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-elevated);
+  border-bottom: none;
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+
+.cf-table .row-low td {
+  background: var(--bg-subtle);
+  font-weight: 600;
+}
+
+.cf-table .row-low:hover td { background: var(--bg-subtle); }
+
+/* Small muted marker for the horizon line and other "this is an estimate" notes */
+.est {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}

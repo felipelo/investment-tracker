@@ -1,8 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useDashboard, useDividendSummary, useHoldings, useQuotes } from '../api/hooks';
+import {
+  useCashFlowOutlook,
+  useDashboard,
+  useDividendSummary,
+  useHoldings,
+  useQuotes,
+} from '../api/hooks';
 import { usePortfolioContext } from '../context/PortfolioContext';
 import { tickerToMarketSymbol } from '../lib/symbols';
+import CashFlowOutlook from '../components/CashFlowOutlook';
 import HeroStats from '../components/HeroStats';
 import ReturnBreakdownTable from '../components/ReturnBreakdownTable';
 import AllocationDonut from '../components/AllocationDonut';
@@ -15,6 +22,7 @@ export default function DashboardPage() {
   const dashboard = useDashboard(activePortfolioId, isOverall);
   const [year, setYear] = useState<number | null>(null);
   const dividendSummary = useDividendSummary(activePortfolioId, year, isOverall);
+  const cashFlowOutlook = useCashFlowOutlook(activePortfolioId, isOverall);
 
   const holdings = useHoldings(isOverall ? null : activePortfolioId);
   const holdingData = useMemo(() => holdings.data ?? [], [holdings.data]);
@@ -101,6 +109,8 @@ export default function DashboardPage() {
           )}
 
           <HeroStats dashboard={data} />
+
+          {cashFlowOutlook.data && <CashFlowOutlook outlook={cashFlowOutlook.data} />}
 
           <div className="grid-dashboard">
             <AllocationDonut allocation={data.allocation} />

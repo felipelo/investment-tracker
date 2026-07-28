@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cash flow outlook — Investment Tracker</title>
+  <link rel="stylesheet" href="css/identity.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">IT</div>
+        <div>
+          <div class="brand-text">Investment Tracker</div>
+          <div class="brand-sub">Local · CAD</div>
+        </div>
+      </div>
+      <nav>
+        <div class="nav-section">Overview</div>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="dashboard-cash-flow-outlook.html" class="nav-link active">Cash flow outlook</a>
+        <a href="dashboard-return-breakdown.html" class="nav-link">Return breakdown</a>
+        <a href="holdings.html" class="nav-link">Holdings</a>
+        <a href="portfolios.html" class="nav-link">Portfolios</a>
+        <div class="nav-section">Records</div>
+        <a href="transactions.html" class="nav-link">Record trade</a>
+        <a href="cash-transactions.html" class="nav-link">Cash transactions</a>
+        <a href="dividends.html" class="nav-link">Dividends</a>
+        <a href="smith-maneuver.html" class="nav-link">Smith Maneuver</a>
+        <a href="tax-summary.html" class="nav-link">Tax summary</a>
+        <div class="nav-section">Mock</div>
+        <a href="index.html" class="nav-link">All screens</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Cash flow outlook</h1>
+          <p class="page-subtitle">Final mock · dividends coming in vs fees and interest going out</p>
+        </div>
+        <div class="portfolio-switcher">
+          <span class="tag tag-lavender">Smith Maneuver</span>
+          Margin — Questrade ▾
+        </div>
+      </header>
+
+      <div class="banner banner-info">
+        <div>
+          <strong>Reading this mock.</strong> Today is Tue Jul 28, 2026. Money in is projected from
+          recorded dividend history, money out from recorded fee and interest history. Everything is
+          an estimate — there is no broker feed behind it.
+        </div>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- THE CARD, IN CONTEXT                                          -->
+      <!-- ============================================================= -->
+      <h2 class="section-head">On the Dashboard <span class="tag tag-sage">Final</span></h2>
+      <p class="section-note">
+        Sits under the portfolio KPIs and above the charts: the thing you act on comes before the
+        things you look at. The chart gives the shape of the next two months, the list gives the
+        exact events with a running total, and it scrolls so the card stays a fixed height.
+      </p>
+
+      <div class="mock-frame">
+        <!-- existing hero stats, unchanged -->
+        <div class="grid-3" style="margin-bottom: 1.25rem;">
+          <div class="card">
+            <p class="card-title">Portfolio value</p>
+            <p class="card-value">$142,380</p>
+            <p class="card-meta">Manual prices · Jul 27</p>
+          </div>
+          <div class="card">
+            <p class="card-title">Today's return</p>
+            <p class="card-value positive">+$842 <span style="font-size: 1rem;">(+0.59%)</span></p>
+            <p class="card-meta">vs snapshot Jul 26</p>
+          </div>
+          <div class="card">
+            <p class="card-title">All-time return</p>
+            <p class="card-value positive">+$18,240 <span style="font-size: 1rem;">(+14.7%)</span></p>
+            <p class="card-meta">Incl. realized gains &amp; dividends</p>
+          </div>
+        </div>
+
+        <!-- ========================= NEW CARD ========================= -->
+        <div class="card new-card" style="margin-bottom: 1.25rem;">
+          <div class="cf-head">
+            <div>
+              <p class="card-title" style="margin: 0 0 0.125rem;">Cash flow outlook</p>
+              <span class="est">Next 8 weeks · through Sep 20, 2026</span>
+            </div>
+            <div class="cf-totals">
+              <span class="cf-total">
+                <span class="cf-total-label"><span class="legend-dot" style="background: var(--sage);"></span> In</span>
+                <span class="mono positive">+$1,335.80</span>
+              </span>
+              <span class="cf-total">
+                <span class="cf-total-label"><span class="legend-dot" style="background: var(--peach);"></span> Out</span>
+                <span class="mono negative">−$681.70</span>
+              </span>
+              <span class="cf-total cf-total-key">
+                <span class="cf-total-label">Free to spend</span>
+                <span class="mono positive">+$654.10</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="cf-split">
+            <!-- ---------------- chart ---------------- -->
+            <div>
+              <svg viewBox="0 0 520 220" width="100%" role="img"
+                   aria-label="Weekly dividends in versus fees and interest out, with running total">
+                <!-- gridlines -->
+                <line x1="44" y1="59" x2="508" y2="59" stroke="var(--border)" stroke-width="1"/>
+                <text x="38" y="62.5" font-size="9" fill="var(--text-faint)" text-anchor="end" font-family="DM Sans">$500</text>
+                <line x1="44" y1="130" x2="508" y2="130" stroke="var(--border-strong)" stroke-width="1"/>
+                <text x="38" y="133.5" font-size="9" fill="var(--text-faint)" text-anchor="end" font-family="DM Sans">$0</text>
+
+                <!-- money in (up) -->
+                <rect x="62" y="45.3" width="22" height="84.7" rx="3" fill="var(--sage)"/>
+                <rect x="352" y="25.1" width="22" height="104.9" rx="3" fill="var(--sage)"/>
+
+                <!-- money out (down) -->
+                <rect x="120" y="130" width="22" height="35.2" rx="3" fill="var(--peach)"/>
+                <rect x="178" y="130" width="22" height="13.2" rx="3" fill="var(--peach)"/>
+                <rect x="352" y="130" width="22" height="35.2" rx="3" fill="var(--peach)"/>
+                <rect x="468" y="130" width="22" height="13.2" rx="3" fill="var(--peach)"/>
+
+                <!-- running total, dashed because projected -->
+                <polyline points="73,45.3 131,80.5 189,93.7 247,93.7 305,93.7 363,24 421,24 479,37.2"
+                          fill="none" stroke="var(--lavender-deep)" stroke-width="2"
+                          stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- tightest week -->
+                <circle cx="189" cy="93.7" r="4.5" fill="var(--bg-elevated)"
+                        stroke="var(--lavender-deep)" stroke-width="2"/>
+                <text x="196" y="110" font-size="9" fill="var(--lavender-deep)" font-weight="600" font-family="DM Sans">low $255.95</text>
+                <!-- end of horizon -->
+                <circle cx="479" cy="37.2" r="4" fill="var(--lavender-deep)"/>
+                <text x="474" y="54" font-size="9" fill="var(--lavender-deep)" text-anchor="end" font-weight="600" font-family="DM Sans">$654.10</text>
+
+                <!-- week labels -->
+                <text x="73" y="186" font-size="9" fill="var(--text)" text-anchor="middle" font-weight="600" font-family="DM Sans">Jul 27</text>
+                <text x="131" y="186" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Aug 3</text>
+                <text x="189" y="186" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Aug 10</text>
+                <text x="247" y="186" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Aug 17</text>
+                <text x="305" y="186" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Aug 24</text>
+                <text x="363" y="186" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Aug 31</text>
+                <text x="421" y="186" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Sep 7</text>
+                <text x="479" y="186" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Sep 14</text>
+                <text x="276" y="206" font-size="9" fill="var(--text-faint)" text-anchor="middle" font-family="DM Sans">week beginning</text>
+              </svg>
+
+              <div class="cf-legend">
+                <span><span class="swatch-dot" style="background: var(--sage);"></span> Dividends in</span>
+                <span><span class="swatch-dot" style="background: var(--peach);"></span> Fees &amp; interest out</span>
+                <span><span class="swatch-line"></span> Running total</span>
+              </div>
+            </div>
+
+            <!-- ---------------- schedule ---------------- -->
+            <div>
+              <div class="cf-schedule">
+                <table class="cf-table">
+                  <thead>
+                    <tr>
+                      <th>When</th>
+                      <th>What</th>
+                      <th class="num">Amount</th>
+                      <th class="num">Running</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="mono nowrap">Fri Jul 31</td>
+                      <td><span class="ticker">TSE:XEI</span> distribution</td>
+                      <td class="num mono positive">+$312.40</td>
+                      <td class="num mono">$312.40</td>
+                    </tr>
+                    <tr>
+                      <td class="mono nowrap">Fri Jul 31</td>
+                      <td><span class="ticker">TSE:BANK</span> distribution</td>
+                      <td class="num mono positive">+$187.60</td>
+                      <td class="num mono">$500.00</td>
+                    </tr>
+                    <tr>
+                      <td class="mono nowrap">Fri Jul 31</td>
+                      <td><span class="ticker">TSE:ZWB</span> distribution</td>
+                      <td class="num mono positive">+$96.80</td>
+                      <td class="num mono">$596.80</td>
+                    </tr>
+                    <tr>
+                      <td class="mono nowrap">Mon Aug 3</td>
+                      <td>TD HELOC interest</td>
+                      <td class="num mono negative">−$244.00</td>
+                      <td class="num mono">$352.80</td>
+                    </tr>
+                    <tr>
+                      <td class="mono nowrap">Mon Aug 3</td>
+                      <td>TD HELOC fee</td>
+                      <td class="num mono negative">−$3.95</td>
+                      <td class="num mono">$348.85</td>
+                    </tr>
+                    <tr class="row-low">
+                      <td class="mono nowrap">Sat Aug 15</td>
+                      <td>Questrade Margin interest</td>
+                      <td class="num mono negative">−$92.90</td>
+                      <td class="num mono">$255.95</td>
+                    </tr>
+                    <tr>
+                      <td class="mono nowrap">Mon Aug 31</td>
+                      <td><span class="ticker">TSE:XEI</span> distribution</td>
+                      <td class="num mono positive">+$312.40</td>
+                      <td class="num mono">$568.35</td>
+                    </tr>
+                    <tr>
+                      <td class="mono nowrap">Mon Aug 31</td>
+                      <td><span class="ticker">TSE:BANK</span> distribution</td>
+                      <td class="num mono positive">+$187.60</td>
+                      <td class="num mono">$755.95</td>
+                    </tr>
+                    <tr>
+                      <td class="mono nowrap">Mon Aug 31</td>
+                      <td><span class="ticker">TSE:ZWB</span> distribution</td>
+                      <td class="num mono positive">+$96.80</td>
+                      <td class="num mono">$852.75</td>
+                    </tr>
+                    <tr>
+                      <td class="mono nowrap">Tue Sep 1</td>
+                      <td><span class="ticker">TSE:ENB</span> dividend <span class="tag tag-butter">quarterly</span></td>
+                      <td class="num mono positive">+$142.20</td>
+                      <td class="num mono">$994.95</td>
+                    </tr>
+                    <tr>
+                      <td class="mono nowrap">Thu Sep 3</td>
+                      <td>TD HELOC interest</td>
+                      <td class="num mono negative">−$244.00</td>
+                      <td class="num mono">$750.95</td>
+                    </tr>
+                    <tr>
+                      <td class="mono nowrap">Thu Sep 3</td>
+                      <td>TD HELOC fee</td>
+                      <td class="num mono negative">−$3.95</td>
+                      <td class="num mono">$747.00</td>
+                    </tr>
+                    <tr>
+                      <td class="mono nowrap">Tue Sep 15</td>
+                      <td>Questrade Margin interest</td>
+                      <td class="num mono negative">−$92.90</td>
+                      <td class="num mono">$654.10</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="card-meta" style="margin-top: 0.5rem;">
+                13 projected events · scroll for the full 8 weeks. Dates come from the cadence of
+                what you have recorded, so read them as "around then".
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- ======================= END NEW CARD ======================= -->
+
+        <!-- existing charts row, abbreviated -->
+        <div class="grid-dashboard">
+          <div class="card">
+            <p class="card-title">Allocation</p>
+            <div style="display: flex; gap: 2rem; align-items: center;">
+              <svg viewBox="0 0 120 120" width="130" height="130" aria-label="Allocation chart">
+                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--bg-subtle)" stroke-width="20"/>
+                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--sage-deep)" stroke-width="20"
+                  stroke-dasharray="150.8 314" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>
+                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--lavender-deep)" stroke-width="20"
+                  stroke-dasharray="99.6 314" stroke-dashoffset="-150.8" transform="rotate(-90 60 60)"/>
+                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--peach-deep)" stroke-width="20"
+                  stroke-dasharray="38.2 314" stroke-dashoffset="-250.4" transform="rotate(-90 60 60)"/>
+                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--sky-deep)" stroke-width="20"
+                  stroke-dasharray="26.4 314" stroke-dashoffset="-288.6" transform="rotate(-90 60 60)"/>
+              </svg>
+              <div class="legend">
+                <div class="legend-item"><span class="legend-dot" style="background: var(--sage-deep);"></span> TSE:XEI · 47.8%</div>
+                <div class="legend-item"><span class="legend-dot" style="background: var(--lavender-deep);"></span> TSE:BANK · 31.6%</div>
+                <div class="legend-item"><span class="legend-dot" style="background: var(--peach-deep);"></span> TSE:ENB · 12.1%</div>
+                <div class="legend-item"><span class="legend-dot" style="background: var(--sky-deep);"></span> Cash · 8.5%</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <p class="card-title">Dividends · 2026</p>
+            <svg viewBox="0 0 400 130" width="100%" height="130" aria-label="Monthly dividends">
+              <rect x="20" y="70" width="24" height="50" rx="3" fill="var(--sage)"/>
+              <rect x="52" y="55" width="24" height="65" rx="3" fill="var(--sage)"/>
+              <rect x="84" y="60" width="24" height="60" rx="3" fill="var(--sage)"/>
+              <rect x="116" y="45" width="24" height="75" rx="3" fill="var(--sage)"/>
+              <rect x="148" y="50" width="24" height="70" rx="3" fill="var(--sage)"/>
+              <rect x="180" y="35" width="24" height="85" rx="3" fill="var(--sage)"/>
+              <rect x="212" y="42" width="24" height="78" rx="3" fill="var(--sage-deep)"/>
+              <polyline points="32,105 64,92 96,86 128,76 160,70 192,60 224,54"
+                fill="none" stroke="var(--lavender-deep)" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="224" cy="54" r="4" fill="var(--lavender-deep)"/>
+              <text x="32" y="130" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">J</text>
+              <text x="64" y="130" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">F</text>
+              <text x="96" y="130" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">M</text>
+              <text x="128" y="130" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">A</text>
+              <text x="160" y="130" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">M</text>
+              <text x="192" y="130" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">J</text>
+              <text x="224" y="130" font-size="9" fill="var(--text)" text-anchor="middle" font-weight="600" font-family="DM Sans">J</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- EDGE STATES                                                   -->
+      <!-- ============================================================= -->
+      <h2 class="section-head">Edge states</h2>
+
+      <p class="section-note">
+        <strong>1. The dividends do not cover it.</strong> The reason the card exists. When the
+        running total crosses zero the headline flips to a shortfall and says by when.
+      </p>
+
+      <div class="mock-frame">
+        <div class="card new-card">
+          <div class="cf-head">
+            <div>
+              <p class="card-title" style="margin: 0 0 0.125rem;">Cash flow outlook</p>
+              <span class="est">Next 8 weeks · through Sep 20, 2026</span>
+            </div>
+            <div class="cf-totals">
+              <span class="cf-total">
+                <span class="cf-total-label"><span class="legend-dot" style="background: var(--sage);"></span> In</span>
+                <span class="mono positive">+$377.50</span>
+              </span>
+              <span class="cf-total">
+                <span class="cf-total-label"><span class="legend-dot" style="background: var(--peach);"></span> Out</span>
+                <span class="mono negative">−$681.70</span>
+              </span>
+              <span class="cf-total cf-total-key">
+                <span class="cf-total-label">Shortfall</span>
+                <span class="mono negative">−$304.20</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="banner banner-warn">
+            <div>
+              Projected dividends stop covering fees and interest on <strong>Aug 3</strong>, and the
+              gap reaches <strong>$304.20</strong> by Sep 20. Top up Chequing before then, or the
+              credit-line balances grow.
+            </div>
+          </div>
+
+          <svg viewBox="0 0 520 170" width="100%" role="img"
+               aria-label="Running total crossing into a shortfall">
+            <rect x="44" y="60" width="464" height="75" fill="var(--loss-bg)" opacity="0.6"/>
+            <line x1="44" y1="60" x2="508" y2="60" stroke="var(--border-strong)" stroke-width="1"/>
+            <text x="38" y="63.5" font-size="9" fill="var(--text-faint)" text-anchor="end" font-family="DM Sans">$0</text>
+            <text x="52" y="76" font-size="9" fill="var(--loss)" font-family="DM Sans">shortfall</text>
+
+            <polyline points="73,16 131,73.8 189,95.5 247,95.5 305,95.5 363,109.3 421,109.3 479,130.9"
+                      fill="none" stroke="var(--loss)" stroke-width="2"
+                      stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="131" cy="73.8" r="4.5" fill="var(--bg-elevated)" stroke="var(--loss)" stroke-width="2"/>
+            <text x="138" y="70" font-size="9" fill="var(--loss)" font-weight="600" font-family="DM Sans">goes negative Aug 3</text>
+            <circle cx="479" cy="130.9" r="4" fill="var(--loss)"/>
+            <text x="472" y="127" font-size="9" fill="var(--loss)" text-anchor="end" font-weight="600" font-family="DM Sans">−$304.20</text>
+
+            <text x="73" y="152" font-size="9" fill="var(--text)" text-anchor="middle" font-weight="600" font-family="DM Sans">Jul 27</text>
+            <text x="131" y="152" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Aug 3</text>
+            <text x="189" y="152" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Aug 10</text>
+            <text x="247" y="152" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Aug 17</text>
+            <text x="305" y="152" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Aug 24</text>
+            <text x="363" y="152" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Aug 31</text>
+            <text x="421" y="152" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Sep 7</text>
+            <text x="479" y="152" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-family="DM Sans">Sep 14</text>
+          </svg>
+        </div>
+      </div>
+
+      <p class="section-note">
+        <strong>2. Not enough history to project.</strong> A holding needs at least two recorded
+        dividends before its cadence can be inferred. Until then the card says what it is leaving
+        out, rather than quietly under-counting the money coming in.
+      </p>
+
+      <div class="mock-frame">
+        <div class="grid-2">
+          <div class="card new-card">
+            <p class="card-title">Cash flow outlook</p>
+            <div class="banner banner-info" style="margin-bottom: 0;">
+              <div>
+                Not enough history to project yet. Record at least two dividend payments for a
+                holding in <a href="dividends.html" style="color: var(--sage-deep);">Dividends</a>,
+                and one month of fees or interest in
+                <a href="cash-transactions.html" style="color: var(--sage-deep);">Cash transactions</a>.
+              </div>
+            </div>
+          </div>
+          <div class="card new-card">
+            <p class="card-title">Cash flow outlook <span class="tag tag-butter">Partial</span></p>
+            <div class="cf-totals" style="justify-content: flex-start; gap: 1.75rem; margin-bottom: 0.875rem;">
+              <span class="cf-total">
+                <span class="cf-total-label">In</span>
+                <span class="mono positive">+$1,193.60</span>
+              </span>
+              <span class="cf-total">
+                <span class="cf-total-label">Out</span>
+                <span class="mono negative">−$681.70</span>
+              </span>
+              <span class="cf-total cf-total-key">
+                <span class="cf-total-label">Free to spend</span>
+                <span class="mono positive">+$511.90</span>
+              </span>
+            </div>
+            <div class="banner banner-warn" style="margin-bottom: 0;">
+              <div>
+                <strong>TSE:ENB</strong> has only one recorded payment, so it is left out. Actual
+                income is likely higher than shown.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- WHAT FEEDS IT                                                 -->
+      <!-- ============================================================= -->
+      <h2 class="section-head">What feeds the projection</h2>
+      <p class="section-note">
+        Both sides are inferred from the rhythm of what you have already recorded. This is the part
+        worth arguing about, because it is where the numbers can be wrong.
+      </p>
+
+      <div class="mock-frame">
+        <div class="cf-feeds">
+          <div class="card">
+            <p class="card-title"><span class="legend-dot cf-key-dot" style="background: var(--sage-deep);"></span> Money in — from dividend history</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Holding</th>
+                    <th>Recorded payments</th>
+                    <th>Cadence</th>
+                    <th style="text-align: right;">Next est.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="ticker">TSE:XEI</span></td>
+                    <td class="mono">Apr 30 · May 29 · Jun 30</td>
+                    <td><span class="tag tag-sage">Monthly</span></td>
+                    <td class="mono" style="text-align: right;">Jul 31 · $312.40</td>
+                  </tr>
+                  <tr>
+                    <td><span class="ticker">TSE:BANK</span></td>
+                    <td class="mono">Apr 30 · May 29 · Jun 30</td>
+                    <td><span class="tag tag-sage">Monthly</span></td>
+                    <td class="mono" style="text-align: right;">Jul 31 · $187.60</td>
+                  </tr>
+                  <tr>
+                    <td><span class="ticker">TSE:ZWB</span></td>
+                    <td class="mono">Apr 30 · May 29 · Jun 30</td>
+                    <td><span class="tag tag-sage">Monthly</span></td>
+                    <td class="mono" style="text-align: right;">Jul 31 · $96.80</td>
+                  </tr>
+                  <tr>
+                    <td><span class="ticker">TSE:ENB</span></td>
+                    <td class="mono">Dec 1 · Mar 1 · Jun 1</td>
+                    <td><span class="tag tag-butter">Quarterly</span></td>
+                    <td class="mono" style="text-align: right;">Sep 1 · $142.20</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="card-meta">
+              Cadence is the typical gap between recorded payment dates; the amount is the most
+              recent payment. It ignores share-count changes and distribution cuts, so if you buy
+              more units the estimate stays low until the next real payment is recorded.
+            </p>
+          </div>
+
+          <div class="card">
+            <p class="card-title"><span class="legend-dot cf-key-dot" style="background: var(--peach-deep);"></span> Money out — from fee and interest history</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Account</th>
+                    <th>Type</th>
+                    <th style="text-align: right;">Amount</th>
+                    <th>Counts?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mono">Jun 3</td>
+                    <td>TD HELOC</td>
+                    <td><span class="tag tag-peach">Interest Charge</span></td>
+                    <td class="mono" style="text-align: right;">$244.00</td>
+                    <td><span class="tag tag-sage">Baseline</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">Jun 3</td>
+                    <td>TD HELOC</td>
+                    <td><span class="tag tag-sky">Fee</span></td>
+                    <td class="mono" style="text-align: right;">$3.95</td>
+                    <td><span class="tag tag-sage">Baseline</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">Jun 15</td>
+                    <td>Questrade Margin</td>
+                    <td><span class="tag tag-peach">Interest Charge</span></td>
+                    <td class="mono" style="text-align: right;">$92.90</td>
+                    <td><span class="tag tag-sage">Baseline</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">Jun 6</td>
+                    <td>TD HELOC</td>
+                    <td><span class="tag">Interest Payment</span></td>
+                    <td class="mono" style="text-align: right;">$244.00</td>
+                    <td><span class="est">Skipped · same obligation</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">Jun 5</td>
+                    <td>Chequing</td>
+                    <td><span class="tag">Withdrawal</span></td>
+                    <td class="mono" style="text-align: right;">$247.95</td>
+                    <td><span class="est">Skipped · you funding it</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="card-meta">
+              Per account per month, use <strong>Interest Charge</strong> if any exists, otherwise
+              fall back to <strong>Interest Payment</strong>, so the figure is right whether you book
+              the charge, the payment, or both. Withdrawals never count — those are you funding the
+              payment, not the payment itself. The day of month repeats from the baseline.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <p style="margin: 2.5rem 0 1rem; font-size: 0.8125rem; color: var(--text-faint);">
+        Static HTML mock · sample CAD data · CSS <code style="font-size: 0.75rem;">css/identity.css</code>
+      </p>
+    </main>
+  </div>
+
+  <style>
+    .section-head {
+      font-size: 1.0625rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin: 2.5rem 0 0.375rem;
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .section-note {
+      margin: 0 0 1rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      max-width: 66ch;
+    }
+
+    .section-note code {
+      font-size: 0.8125rem;
+      background: var(--bg-subtle);
+      padding: 0.05rem 0.3rem;
+      border-radius: 4px;
+    }
+
+    /* Dashed wrapper marks "this is a mock frame", not part of the design */
+    .mock-frame {
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      background: var(--bg);
+    }
+
+    /* Soft highlight on the card being proposed */
+    .new-card {
+      outline: 2px solid var(--sage);
+      outline-offset: 3px;
+    }
+
+    /* ---- Cash flow card ---- */
+    .cf-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      padding-bottom: 0.875rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cf-totals {
+      display: flex;
+      align-items: flex-end;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .cf-total {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .cf-total-key {
+      font-size: 1.5rem;
+      padding-left: 2rem;
+      border-left: 1px solid var(--border);
+    }
+
+    .cf-total-label {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-faint);
+    }
+
+    .cf-total-label .legend-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+    }
+
+    /* Chart gets the wider column */
+    .cf-split {
+      display: grid;
+      grid-template-columns: minmax(340px, 6fr) 5fr;
+      gap: 1.75rem;
+      align-items: start;
+    }
+
+    @media (max-width: 1100px) {
+      .cf-split { grid-template-columns: 1fr; }
+    }
+
+    .cf-legend {
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 0.25rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .swatch-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+
+    .swatch-line {
+      display: inline-block;
+      width: 16px;
+      height: 0;
+      border-top: 2px dashed var(--lavender-deep);
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+
+    /* Scrollable schedule keeps the card a fixed height */
+    .cf-schedule {
+      max-height: 268px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .cf-table th,
+    .cf-table td { padding: 0.5rem 0.75rem; }
+
+    .cf-table th.num,
+    .cf-table td.num { text-align: right; }
+
+    .cf-table .nowrap { white-space: nowrap; }
+
+    /* Sticky header: borders do not stick, so use an inset shadow */
+    .cf-schedule thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--bg-elevated);
+      border-bottom: none;
+      box-shadow: inset 0 -1px 0 var(--border);
+    }
+
+    .cf-table .row-low td {
+      background: var(--bg-subtle);
+      font-weight: 600;
+    }
+
+    .cf-table .row-low:hover td { background: var(--bg-subtle); }
+
+    .cf-key-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    /* Stacked, not side by side: these reference tables need the full width
+       or the tag pills and date lists wrap. */
+    .cf-feeds {
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    .cf-feeds .tag,
+    .cf-feeds .est { white-space: nowrap; }
+
+    .cf-feeds td { white-space: nowrap; }
+
+    /* small muted marker, reused for horizon and "skipped" notes */
+    .est {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-faint);
+    }
+  </style>
+</body>
+</html>

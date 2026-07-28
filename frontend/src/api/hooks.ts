@@ -12,6 +12,7 @@ import type {
   CreateSecurity,
   CreateSecurityTransaction,
   CreateSmithManeuverFlow,
+  CashFlowOutlook,
   DashboardData,
   Dividend,
   DividendSummary,
@@ -39,6 +40,8 @@ const keys = {
   transactions: (filters?: TransactionFilters) =>
     ['security-transactions', filters ?? {}] as const,
   dashboard: (portfolioId: number | 'all') => ['dashboard', portfolioId] as const,
+  // Nested under 'dashboard' so the existing dashboard invalidations refresh it too.
+  cashFlowOutlook: (portfolioId: number | 'all') => ['dashboard', 'cash-flow', portfolioId] as const,
   dividends: (portfolioId: number) => ['dividends', portfolioId] as const,
   dividendSummary: (portfolioId: number | 'all', year: number | null) =>
     ['dividends', 'summary', portfolioId, year ?? 'latest'] as const,
@@ -144,6 +147,19 @@ export function useDashboard(portfolioId: number | null, overall = false) {
         : ['dashboard', 'none'],
     queryFn: () =>
       api.get<DashboardData>(overall ? '/portfolios/dashboard' : `/portfolios/${portfolioId}/dashboard`),
+    enabled: overall || portfolioId !== null,
+  });
+}
+
+export function useCashFlowOutlook(portfolioId: number | null, overall = false) {
+  return useQuery({
+    queryKey: overall
+      ? keys.cashFlowOutlook('all')
+      : portfolioId !== null
+        ? keys.cashFlowOutlook(portfolioId)
+        : ['dashboard', 'cash-flow', 'none'],
+    queryFn: () =>
+      api.get<CashFlowOutlook>('/cash-flow-outlook', overall ? undefined : { portfolioId: portfolioId! }),
     enabled: overall || portfolioId !== null,
   });
 }
