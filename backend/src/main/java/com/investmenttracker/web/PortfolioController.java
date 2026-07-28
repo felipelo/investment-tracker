@@ -13,6 +13,7 @@ import com.investmenttracker.web.dto.UpdatePortfolioRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +31,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/portfolios")
 @Tag(name = "Portfolios")
+// Spring's binding hint scan de-duplicates referenced types by raw class, so the inner List of
+// List<List<MonthSlice>> stops the walk and MonthSlice never reaches the native reflection
+// metadata. Register it explicitly; drop this if breakdown ever loses a nesting level.
+@RegisterReflectionForBinding(DividendSummaryResponse.MonthSlice.class)
 public class PortfolioController {
 
     private final PortfolioService portfolioService;
