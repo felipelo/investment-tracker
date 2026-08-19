@@ -72,6 +72,9 @@ public class SecurityConfig {
     @Bean
     @ConditionalOnProperty(name = "app.auth.enabled", matchIfMissing = true)
     PasswordEncoder passwordEncoder() {
+        var r = new BCryptPasswordEncoder();
+        var e = r.encode("felipe");
+        System.out.println(e);
         return new BCryptPasswordEncoder();
     }
 }

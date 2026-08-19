@@ -44,5 +44,24 @@ services:
     ports:
       - "8080:8080"
 
+  # Opt-in one-shot: `docker compose --profile backfill run --rm price-backfill`
+  # Default CMD is `--days 7`. Full history:
+  #   docker compose --profile backfill run --rm price-backfill python backfill_price_snapshots.py
+  price-backfill:
+    profiles: ["backfill"]
+    build:
+      context: ../scripts
+      dockerfile: Dockerfile
+    container_name: investment-tracker-price-backfill
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: investment_tracker
+      POSTGRES_USER: investment_tracker
+      POSTGRES_PASSWORD: investment_tracker
+
 volumes:
   postgres_data:

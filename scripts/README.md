@@ -1,6 +1,8 @@
 # Price snapshot backfill
 
-One-time script that fetches historical daily closing prices via [yfinance](https://pypi.org/project/yfinance/) and upserts one row per (security, trading day) into `price_snapshot`. Portfolio value and the dashboard period returns (5 Days / One Month / Six Month / One Year) are computed live from these prices plus the transaction history, so a dense `price_snapshot` is what makes those returns work.
+Fetches historical daily closing prices via [yfinance](https://pypi.org/project/yfinance/) and upserts one row per (security, trading day) into `price_snapshot`. Portfolio value and the dashboard period returns (5 Days / One Month / Six Month / One Year) are computed live from these prices plus the transaction history, so a dense `price_snapshot` is what makes those returns work.
+
+On a laptop this is a script (venv or Docker). In AWS it is the same image on a nightly EventBridge Scheduler → Fargate task; see [docs/AWS-PRICE-BACKFILL.md](../docs/AWS-PRICE-BACKFILL.md).
 
 ## Setup
 
@@ -12,6 +14,19 @@ pip install -r requirements.txt
 ```
 
 Ensure Postgres is running (e.g. `docker compose -f backend/docker-compose.yml up -d postgres`).
+
+## Docker (local)
+
+Same image as AWS. Default command is `--days 7`. Postgres must already be up.
+
+```bash
+# from the repository root
+docker compose -f backend/docker-compose.yml --profile backfill run --rm price-backfill
+
+# full history (first transaction → today)
+docker compose -f backend/docker-compose.yml --profile backfill run --rm price-backfill \
+  python backfill_price_snapshots.py
+```
 
 ## Usage
 

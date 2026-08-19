@@ -2,7 +2,7 @@
 
 Deploy Investment Tracker as **one container** (React SPA + Spring Boot API on the same origin) on **AWS App Runner**, with **RDS PostgreSQL 17**. Everything below is meant to be run from your laptop with the AWS CLI.
 
-Companion docs: [MACHINE-SETUP.md](MACHINE-SETUP.md) (local env vars / bcrypt), [AWS-DEPLOYMENT-PLAN.md](AWS-DEPLOYMENT-PLAN.md) (topology decisions), [backend/README.md](../backend/README.md) (Docker images).
+Companion docs: [MACHINE-SETUP.md](MACHINE-SETUP.md) (local env vars / bcrypt), [AWS-DEPLOYMENT-PLAN.md](AWS-DEPLOYMENT-PLAN.md) (topology decisions), [backend/README.md](../backend/README.md) (Docker images), [AWS-PRICE-BACKFILL.md](AWS-PRICE-BACKFILL.md) (nightly yfinance → RDS).
 
 ```mermaid
 flowchart LR
@@ -21,11 +21,12 @@ There is **no separate frontend host**. The Docker image builds the SPA and serv
 | Piece | AWS service | Notes |
 |-------|-------------|--------|
 | App + UI | App Runner | Pulls image from ECR; HTTPS URL out of the box |
-| Database | RDS PostgreSQL 17 | Private; reachable only via App Runner’s VPC connector |
+| Database | RDS PostgreSQL 17 | Private; App Runner VPC connector (and optional backfill task SG) on 5432 |
 | Image registry | ECR | Built from [`backend/Dockerfile`](../backend/Dockerfile) (JVM) |
 | Live quotes | Alpha Vantage (external) | Optional; needs NAT if the VPC connector has no internet path |
+| Price snapshots | EventBridge + Fargate | Optional nightly yfinance job; see [AWS-PRICE-BACKFILL.md](AWS-PRICE-BACKFILL.md) |
 
-**Not used:** S3/CloudFront for the SPA, Elastic Beanstalk, ECS, Cognito.
+**Not used for the app itself:** S3/CloudFront for the SPA, Elastic Beanstalk, Cognito. ECS Fargate is only the optional price-backfill task, not the web container.
 
 ---
 
@@ -490,7 +491,7 @@ Health probes must stay on `/actuator/health` (or `/actuator/health/readiness`).
 
 ## 14. Tear down (avoid surprise bills)
 
-Order matters: delete the service before the connector and RDS.
+Order matters: if you added the [price backfill](AWS-PRICE-BACKFILL.md), delete that schedule and Fargate task **first** (section 10 of that guide), then the App Runner service, then the connector and RDS.
 
 ```bash
 aws apprunner delete-service --region "$AWS_REGION" --service-arn "$SERVICE_ARN"
