@@ -1,8 +1,20 @@
 # Price snapshot backfill
 
-Fetches historical daily closing prices via [yfinance](https://pypi.org/project/yfinance/) and upserts one row per (security, trading day) into `price_snapshot`. Portfolio value and the dashboard period returns (5 Days / One Month / Six Month / One Year) are computed live from these prices plus the transaction history, so a dense `price_snapshot` is what makes those returns work.
+Fetches historical daily closing prices via [yfinance](https://pypi.org/project/yfinance/) and upserts one row per (security, trading day) into `price_snapshot`. Every run also overlays the latest 1-minute quote onto that session's date: a second run the same day refreshes that row, and the next day's official `Close` replaces it. Portfolio value and the dashboard period returns (5 Days / One Month / Six Month / One Year) are computed live from these prices plus the transaction history, so a dense `price_snapshot` is what makes those returns work.
 
-On a laptop this is a script (venv or Docker). In AWS it is the same image on a nightly EventBridge Scheduler → Fargate task; see [docs/AWS-PRICE-BACKFILL.md](../docs/AWS-PRICE-BACKFILL.md).
+On a laptop this is a script (venv or Docker). In AWS it is the same image on a nightly EventBridge Scheduler → Fargate task; see [docs/AWS-PRICE-BACKFILL.md](../docs/AWS-PRICE-BACKFILL.md). Build, push, and schedule commands for this image (and the app image) are in [docs/AWS-BUILD-AND-DEPLOY.md](../docs/AWS-BUILD-AND-DEPLOY.md).
+
+To rebuild and roll out an **already created** app or backfill image (no new RDS / IAM / networking):
+
+```bash
+# from the repository root
+./scripts/update_aws.sh            # interactive
+./scripts/update_aws.sh app        # versioned JVM image → App Runner
+./scripts/update_aws.sh status
+./scripts/update_aws.sh rollback app --to <version>
+```
+
+The first run against a service still on `:latest` should be `./scripts/update_aws.sh bootstrap`. See [docs/AWS-BUILD-AND-DEPLOY.md](../docs/AWS-BUILD-AND-DEPLOY.md).
 
 ## Setup
 
@@ -63,19 +75,23 @@ Reads Postgres connection from env (defaults match `backend/docker-compose.yml`)
 
 ## How it works
 
-For each held security, fetch its unadjusted daily `Close` from its first transaction date to today and upsert each close:
+For each held security, fetch its unadjusted daily `Close` from its first transaction date to today, then overlay the latest 1-minute quote on that bar's date (America/Toronto) and upsert:
 
 ```
 price_snapshot(security_id, snapshot_date, price) = Close_on(snapshot_date)
+# latest session: last 1-minute Close (same unique key)
 ```
 
-- Prices are fetched from yfinance using unadjusted `Close` (not `Adj Close`), because splits are already modeled via SPLIT transactions.
-- Results are upserted into `price_snapshot` on `(security_id, snapshot_date)`.
+- Past days use unadjusted daily `Close` (not `Adj Close`), because splits are already modeled via SPLIT transactions.
+- The latest quote is stamped with the 1-minute bar's date, not blindly `today` — a weekend run writes Friday, so Monday's official Close can replace it.
+- Same-day reruns upsert the newer last price onto the same `(security_id, snapshot_date)`.
+- The next day's daily history has yesterday's official `Close`; that upsert replaces yesterday's intra-day row.
 - The dashboard then computes value as of any date D as `Σ shareBalance_as_of(D) × nearestClose_on_or_before(D)`.
 
 ## Caveats
 
 - **No FX conversion**: The app sums `price × shares` across currencies directly. Mixed USD/CAD portfolios will have values that are not currency-normalized.
 - **Unadjusted closes**: Uses raw `Close`, not split/dividend-adjusted prices, to avoid double-counting with SPLIT transactions and the separate dividends feature.
+- **Yahoo delay**: 1-minute quotes on the free API are typically delayed ~15 minutes. That is as current as this job can get without a paid feed.
 - **Unresolved tickers**: If yfinance cannot resolve a symbol, that security is skipped with a warning. Fix the ticker mapping or add prices manually.
 - **TSX tickers**: `TSE:ENB` / `TSX:ENB` → `ENB.TO`; Alpha Vantage-style `ENB.TRT` / `ENB.TRV` → `ENB.TO`. Bare US tickers (e.g. `GOOG`) pass through unchanged.

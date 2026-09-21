@@ -5,11 +5,14 @@ Backfill price_snapshot from historical daily closing prices (yfinance).
 Writes one row per (security, trading day):
   price_snapshot(security_id, snapshot_date, price) = unadjusted daily Close
 
+Every run also overlays the latest 1-minute quote onto that session's date so
+same-day reruns refresh "now", and the next day's official Close replaces it.
+
 Portfolio value and period returns are computed live from these rows plus the
 transaction history, so a dense price_snapshot is what makes the dashboard's
 5D / 1M / 6M / 1Y returns work.
 
-Run once; idempotent via upsert on (security_id, snapshot_date).
+Idempotent via upsert on (security_id, snapshot_date).
 """
 
 from __future__ import annotations
@@ -21,6 +24,7 @@ import sys
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import psycopg2
@@ -33,6 +37,7 @@ log = logging.getLogger(__name__)
 MONEY_SCALE = Decimal("0.0001")  # 4 decimal places, matches NUMERIC(18,4)
 
 TSX_PREFIXES = frozenset({"TSE", "TSX"})
+TORONTO = ZoneInfo("America/Toronto")
 
 
 def to_yahoo(ticker: str) -> str:
@@ -137,6 +142,48 @@ def fetch_closes(yahoo_symbol: str, start: date, end: date) -> pd.Series | None:
     return closes
 
 
+def fetch_latest_quote(yahoo_symbol: str) -> tuple[date, Decimal] | None:
+    """Latest 1-minute Close; snapshot_date is the bar in America/Toronto."""
+    try:
+        hist = yf.Ticker(yahoo_symbol).history(
+            period="5d",
+            interval="1m",
+            auto_adjust=False,
+        )
+    except Exception as exc:
+        log.warning("yfinance latest quote failed for %s: %s", yahoo_symbol, exc)
+        return None
+
+    if hist is None or hist.empty or "Close" not in hist.columns:
+        return None
+
+    closes = hist["Close"].dropna()
+    if closes.empty:
+        return None
+
+    ts = closes.index[-1]
+    if getattr(ts, "tzinfo", None) is not None:
+        ts = ts.tz_convert(TORONTO)
+    snapshot_date = ts.date()
+    price = Decimal(str(closes.iloc[-1]))
+    if price <= 0:
+        return None
+    return snapshot_date, price
+
+
+def overlay_latest(closes: pd.Series | None, snapshot_date: date, price: Decimal) -> pd.Series:
+    """Replace (or insert) the live quote on snapshot_date so upsert overwrites that row."""
+    ts = pd.Timestamp(snapshot_date).normalize()
+    value = float(price)
+    if closes is None or closes.empty:
+        return pd.Series([value], index=pd.DatetimeIndex([ts]))
+    closes = closes.copy()
+    if getattr(closes.index, "tz", None) is not None:
+        ts = ts.tz_localize(closes.index.tz)
+    closes.loc[ts] = value
+    return closes.sort_index()
+
+
 def upsert_prices(conn, security_id: int, closes: pd.Series, dry_run: bool) -> int:
     rows = []
     for ts, val in closes.items():
@@ -170,23 +217,38 @@ def process_security(conn, security: Security, days: int | None, dry_run: bool) 
 
     yahoo = to_yahoo(security.ticker)
     closes = fetch_closes(yahoo, start_date, today)
-    if closes is None:
+    latest = fetch_latest_quote(yahoo)
+    if latest is not None:
+        closes = overlay_latest(closes, latest[0], latest[1])
+    elif closes is None:
         print(f"  WARNING: no price data for {security.ticker} ({yahoo}); skipping")
         log.warning("No price data for %s (%s)", security.ticker, yahoo)
         return
+    else:
+        log.warning("No latest quote for %s (%s); writing daily closes only", security.ticker, yahoo)
 
     count = upsert_prices(conn, security.id, closes, dry_run)
     action = "would upsert" if dry_run else "upserted"
+    live_note = ""
+    if latest is not None:
+        live_note = (
+            f" | live {latest[0]} ${float(latest[1]):,.2f} "
+            f"(overrides same-day snapshot)"
+        )
     print(
         f"  {security.ticker} ({yahoo}): {action} {count} rows | "
         f"{closes.index[0].date()} ${closes.iloc[0]:,.2f} -> "
         f"{closes.index[-1].date()} ${closes.iloc[-1]:,.2f}"
+        f"{live_note}"
     )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Backfill price_snapshot from historical yfinance closes",
+        description=(
+            "Backfill price_snapshot from historical yfinance closes, "
+            "overlaying the latest quote on the current session"
+        ),
     )
     parser.add_argument(
         "--portfolio-id",

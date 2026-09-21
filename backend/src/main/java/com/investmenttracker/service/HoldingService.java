@@ -162,6 +162,30 @@ public class HoldingService {
         return values;
     }
 
+    /**
+     * Builds the value/cash-flow series used for time-weighted period returns across {@code portfolioIds}
+     * (one entry for a single portfolio, all of them for the overall dashboard).
+     */
+    PerformanceWindow performanceWindow(
+            java.util.Collection<Long> portfolioIds,
+            List<com.investmenttracker.domain.Dividend> dividends,
+            java.time.LocalDate through
+    ) {
+        var transactions = portfolioIds.stream()
+                .map(securityTransactionRepository::findAllForHoldingsByPortfolio)
+                .flatMap(List::stream)
+                .toList();
+        if (transactions.isEmpty()) {
+            return new PerformanceWindow(List.of(), List.of(), List.of());
+        }
+        var securityIds = transactions.stream()
+                .map(transaction -> transaction.getSecurity().getId())
+                .distinct()
+                .toList();
+        var snapshots = priceSnapshotRepository.findBySecurityIdsThrough(securityIds, through);
+        return new PerformanceWindow(transactions, dividends, snapshots);
+    }
+
     public List<HoldingHistoryRowResponse> getHistory(Long portfolioId, Long securityId) {
         if (!securityRepository.existsById(securityId)) {
             throw new NotFoundException("Security", securityId);

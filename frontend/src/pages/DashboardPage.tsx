@@ -15,6 +15,23 @@ import ReturnBreakdownTable from '../components/ReturnBreakdownTable';
 import AllocationDonut from '../components/AllocationDonut';
 import DividendsChart from '../components/DividendsChart';
 
+function trailingTwelveMonthTotal(
+  currentYearMonths: string[] | undefined,
+  priorYearMonths: string[] | undefined,
+  currentMonth: number,
+): number | null {
+  if (!currentYearMonths || !priorYearMonths) return null;
+  if (currentYearMonths.length < 12 || priorYearMonths.length < 12) return null;
+  let total = 0;
+  for (let i = 0; i <= currentMonth; i++) {
+    total += Number(currentYearMonths[i]);
+  }
+  for (let i = currentMonth + 1; i < 12; i++) {
+    total += Number(priorYearMonths[i]);
+  }
+  return total;
+}
+
 export default function DashboardPage() {
   const [searchParams] = useSearchParams();
   const isOverall = searchParams.get('view') === 'all';
@@ -22,6 +39,9 @@ export default function DashboardPage() {
   const dashboard = useDashboard(activePortfolioId, isOverall);
   const [year, setYear] = useState<number | null>(null);
   const dividendSummary = useDividendSummary(activePortfolioId, year, isOverall);
+  const currentYear = new Date().getFullYear();
+  const ttmCurrentYear = useDividendSummary(activePortfolioId, currentYear, isOverall);
+  const ttmPriorYear = useDividendSummary(activePortfolioId, currentYear - 1, isOverall);
   const cashFlowOutlook = useCashFlowOutlook(activePortfolioId, isOverall);
 
   const holdings = useHoldings(isOverall ? null : activePortfolioId);
@@ -33,6 +53,16 @@ export default function DashboardPage() {
   const quotes = useQuotes(symbols);
 
   const data = dashboard.data;
+  const yieldToCostPct = useMemo(() => {
+    const invested = data != null ? Number(data.invested) : NaN;
+    const ttm = trailingTwelveMonthTotal(
+      ttmCurrentYear.data?.months,
+      ttmPriorYear.data?.months,
+      new Date().getMonth(),
+    );
+    if (ttm === null || !Number.isFinite(invested) || invested <= 0) return null;
+    return (ttm / invested) * 100;
+  }, [data, ttmCurrentYear.data, ttmPriorYear.data]);
   const noReturns =
     data != null &&
     !data.todaysReturn.available &&
@@ -120,6 +150,7 @@ export default function DashboardPage() {
                 year={dividendSummary.data.year}
                 availableYears={dividendSummary.data.availableYears}
                 onYearChange={setYear}
+                yieldToCostPct={yieldToCostPct}
               />
             ) : (
               <div className="card">

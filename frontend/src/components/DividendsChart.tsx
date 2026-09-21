@@ -7,6 +7,7 @@ interface DividendsChartProps {
   year: number;
   availableYears: number[];
   onYearChange: (year: number) => void;
+  yieldToCostPct?: number | null;
 }
 
 const MONTH_LABELS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
@@ -75,6 +76,7 @@ export default function DividendsChart({
   year,
   availableYears,
   onYearChange,
+  yieldToCostPct,
 }: DividendsChartProps) {
   const months = summary.months.map(Number);
   const cumulative = summary.cumulative.map(Number);
@@ -271,6 +273,14 @@ export default function DividendsChart({
         </span>
         <span style={{ marginLeft: 'auto' }}>
           YTD <strong style={{ color: 'var(--text)' }}>{formatMoney(summary.ytdTotal)}</strong>
+        </span>
+        <span>
+          Yield on cost (TTM){' '}
+          <strong style={{ color: 'var(--text)' }}>
+            {yieldToCostPct === null || yieldToCostPct === undefined
+              ? '—'
+              : `${yieldToCostPct.toFixed(2)}%`}
+          </strong>
         </span>
       </div>
     </div>

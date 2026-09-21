@@ -77,6 +77,15 @@ public interface SecurityTransactionRepository extends JpaRepository<SecurityTra
 
     @Query("""
             SELECT t FROM SecurityTransaction t
+            JOIN FETCH t.security s
+            JOIN FETCH t.account a
+            WHERE a.portfolio.id IN :portfolioIds
+            ORDER BY s.ticker ASC, t.date ASC, t.id ASC
+            """)
+    List<SecurityTransaction> findAllForHoldingsByPortfolioIds(@Param("portfolioIds") Collection<Long> portfolioIds);
+
+    @Query("""
+            SELECT t FROM SecurityTransaction t
             JOIN FETCH t.security
             JOIN FETCH t.account a
             WHERE t.security.id = :securityId

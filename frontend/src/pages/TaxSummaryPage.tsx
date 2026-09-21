@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useTaxSummary } from '../api/hooks';
-import { usePortfolioContext } from '../context/PortfolioContext';
 import { formatGainLoss, formatMoney } from '../lib/actions';
 import { exportTaxSummaryCsv, exportTaxSummaryJson } from '../lib/exportTax';
 import type { TaxSummary } from '../api/types';
@@ -14,12 +12,20 @@ function isEmpty(summary: TaxSummary): boolean {
   );
 }
 
+function scopeLabel(names: string[]): string {
+  if (names.length === 0) {
+    return 'no taxable portfolios';
+  }
+  if (names.length === 1) {
+    return names[0];
+  }
+  return `${names.length} taxable portfolios`;
+}
+
 export default function TaxSummaryPage() {
-  const { activePortfolioId, activePortfolio } = usePortfolioContext();
   const [year, setYear] = useState<number | null>(null);
-  const taxSummary = useTaxSummary(activePortfolioId, year);
+  const taxSummary = useTaxSummary(year);
   const data = taxSummary.data;
-  const portfolioName = activePortfolio?.name ?? 'portfolio';
 
   const realizedGain = data ? formatGainLoss(data.realizedGains.total.gainLoss) : null;
 
@@ -30,76 +36,65 @@ export default function TaxSummaryPage() {
           <h1 className="page-title">Tax summary</h1>
           <p className="page-subtitle">
             {data ? `Tax year ${data.year}` : 'Tax year export view'}
-            {activePortfolio ? ` · ${activePortfolio.name}` : ''}
+            {data ? ` · ${scopeLabel(data.portfolioNames)}` : ''}
           </p>
         </div>
       </header>
 
-      {activePortfolioId !== null && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '1.25rem',
-          }}
-        >
-          {data && data.availableYears.length > 0 ? (
-            <div className="portfolio-switcher">
-              <span className="tag tag-butter">Tax year</span>
-              <select
-                value={data.year}
-                onChange={(e) => setYear(Number(e.target.value))}
-                aria-label="Tax year"
-                style={{
-                  fontFamily: 'var(--font)',
-                  fontSize: '0.875rem',
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                }}
-              >
-                {data.availableYears.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <span />
-          )}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              type="button"
-              className="btn btn-ghost"
-              disabled={!data}
-              onClick={() => data && exportTaxSummaryJson(data, portfolioName)}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '1.25rem',
+        }}
+      >
+        {data && data.availableYears.length > 0 ? (
+          <div className="portfolio-switcher">
+            <span className="tag tag-butter">Tax year</span>
+            <select
+              value={data.year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              aria-label="Tax year"
+              style={{
+                fontFamily: 'var(--font)',
+                fontSize: '0.875rem',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+              }}
             >
-              Export JSON
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={!data}
-              onClick={() => data && exportTaxSummaryCsv(data, portfolioName)}
-            >
-              Export CSV
-            </button>
+              {data.availableYears.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
           </div>
+        ) : (
+          <span />
+        )}
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            disabled={!data}
+            onClick={() => data && exportTaxSummaryJson(data)}
+          >
+            Export JSON
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={!data}
+            onClick={() => data && exportTaxSummaryCsv(data)}
+          >
+            Export CSV
+          </button>
         </div>
-      )}
+      </div>
 
-      {activePortfolioId === null && (
-        <div className="card">
-          <p style={{ color: 'var(--text-muted)', margin: 0 }}>
-            No portfolio selected. <Link to="/portfolios">Create a portfolio</Link> to get
-            started.
-          </p>
-        </div>
-      )}
-
-      {activePortfolioId !== null && taxSummary.isPending && (
+      {taxSummary.isPending && (
         <div className="card">
           <p style={{ color: 'var(--text-muted)', margin: 0 }}>Loading…</p>
         </div>
@@ -117,10 +112,19 @@ export default function TaxSummaryPage() {
         <>
           {isEmpty(data) && (
             <div className="banner banner-info" style={{ marginBottom: '1.25rem' }}>
-              No taxable activity recorded for {data.year}. Record trades, dividends or HELOC
+              No taxable activity recorded for {data.year}. Record trades, dividends or credit-line
               interest to populate this summary.
             </div>
           )}
+
+          <div className="banner banner-info" style={{ marginBottom: '1.25rem' }}>
+            ACB is pooled per security across taxable (non-registered) portfolios, matching CRA.
+            Registered accounts (TFSA, RRSP, and similar) are excluded. Per-portfolio Holdings ACB
+            is unchanged.
+            {data.portfolioNames.length > 0
+              ? ` Included: ${data.portfolioNames.join(', ')}.`
+              : ''}
+          </div>
 
           <div className="grid-3" style={{ marginBottom: '1.25rem' }}>
             <div className="card">
@@ -250,7 +254,7 @@ export default function TaxSummaryPage() {
                     {data.interest.months.length === 0 && (
                       <tr>
                         <td colSpan={3} style={{ color: 'var(--text-muted)' }}>
-                          No HELOC interest logged in {data.year}.
+                          No credit-line interest logged in {data.year}.
                         </td>
                       </tr>
                     )}

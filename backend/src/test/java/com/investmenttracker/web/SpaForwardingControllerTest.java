@@ -37,6 +37,7 @@ class SpaForwardingControllerTest {
     @Test
     void actuatorIsNotSwallowed() throws Exception {
         mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
+        mockMvc.perform(get("/actuator/info")).andExpect(status().isOk());
     }
 
     @Test

@@ -45,8 +45,8 @@ const keys = {
   dividends: (portfolioId: number) => ['dividends', portfolioId] as const,
   dividendSummary: (portfolioId: number | 'all', year: number | null) =>
     ['dividends', 'summary', portfolioId, year ?? 'latest'] as const,
-  taxSummary: (portfolioId: number, year: number | null) =>
-    ['tax-summary', portfolioId, year ?? 'latest'] as const,
+  taxSummary: (year: number | null) =>
+    ['tax-summary', year ?? 'latest'] as const,
   cashTransactions: (portfolioId: number) => ['cash-transactions', portfolioId] as const,
   smithManeuver: (portfolioId: number) => ['smith-maneuver', portfolioId] as const,
   quotes: (symbols: string) => ['quotes', symbols] as const,
@@ -190,16 +190,14 @@ export function useDividendSummary(portfolioId: number | null, year: number | nu
   });
 }
 
-export function useTaxSummary(portfolioId: number | null, year: number | null) {
+export function useTaxSummary(year: number | null) {
   return useQuery({
-    queryKey:
-      portfolioId !== null ? keys.taxSummary(portfolioId, year) : ['tax-summary', 'none'],
+    queryKey: keys.taxSummary(year),
     queryFn: () =>
       api.get<TaxSummary>(
-        `/portfolios/${portfolioId}/tax-summary`,
+        '/portfolios/tax-summary',
         year !== null ? { year } : undefined,
       ),
-    enabled: portfolioId !== null,
   });
 }
 

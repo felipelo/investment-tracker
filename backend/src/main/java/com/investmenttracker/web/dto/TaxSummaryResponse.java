@@ -6,14 +6,16 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Per-portfolio, per-tax-year summary (REQUIREMENTS.md section 6.6): realized capital
- * gains by security, dividend income by security, and the Smith Maneuver interest
- * summary by month. A record-keeping aid, not tax advice (REQUIREMENTS.md section 6.7).
+ * Combined per-tax-year summary across taxable (non-registered) portfolios
+ * (REQUIREMENTS.md section 6.6): realized capital gains by security with CRA ACB
+ * pooling, dividend income by security, and the Smith Maneuver interest summary
+ * by month. A record-keeping aid, not tax advice (REQUIREMENTS.md section 6.7).
  */
 @Schema(name = "TaxSummary")
 public record TaxSummaryResponse(
         int year,
         List<Integer> availableYears,
+        List<String> portfolioNames,
         RealizedGains realizedGains,
         DividendIncome dividends,
         InterestSummary interest

@@ -419,6 +419,7 @@ export interface InterestMonthRow {
 export interface TaxSummary {
   year: number;
   availableYears: number[];
+  portfolioNames: string[];
   realizedGains: {
     rows: RealizedGainRow[];
     total: RealizedGainRow;

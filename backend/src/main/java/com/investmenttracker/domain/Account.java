@@ -92,6 +92,14 @@ public class Account {
         this.type = type;
     }
 
+    /** Credit-line types invert owed balance and can source a Smith Maneuver flow. */
+    public static boolean isCreditLine(String type) {
+        if (type == null) {
+            return false;
+        }
+        return "HELOC".equalsIgnoreCase(type) || "Margin".equalsIgnoreCase(type);
+    }
+
     public String getInstitution() {
         return institution;
     }

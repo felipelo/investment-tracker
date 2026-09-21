@@ -1,6 +1,8 @@
 # Scheduled price backfill (EventBridge Scheduler + Fargate)
 
-After the [App Runner + RDS deploy](AWS-DEPLOYMENT.md) is up, this adds a **nightly yfinance job** that upserts the last 7 days of unadjusted closes into `price_snapshot`. Dashboard period returns (5D / 1M / 6M / 1Y) need those rows.
+After the [App Runner + RDS deploy](AWS-DEPLOYMENT.md) is up, this adds a **nightly yfinance job** that upserts the last 7 days of unadjusted closes into `price_snapshot` and overlays the latest session quote (same as a laptop run). Dashboard period returns (5D / 1M / 6M / 1Y) need those rows. After the regular session, that overlay is at or near Close; the next day's official Close still replaces the row if they differ.
+
+Copy-paste order for this account (including the app image and RDS) is in [AWS-BUILD-AND-DEPLOY.md](AWS-BUILD-AND-DEPLOY.md). Use **`us-east-1`** there; do not mix with the `ca-central-1` example below.
 
 The Java API is not involved. The job is the existing [`scripts/backfill_price_snapshots.py`](../scripts/backfill_price_snapshots.py) in a container, with the same `POSTGRES_*` values as App Runner.
 
@@ -19,7 +21,7 @@ Two run modes, one image:
 
 | Mode | Command | When |
 |------|---------|------|
-| Nightly (schedule) | `python backfill_price_snapshots.py --days 7` (image `CMD`) | After North American close |
+| Nightly (schedule) | `python backfill_price_snapshots.py --days 7` (image `CMD`) | After North American close; also refreshes the latest session quote |
 | Full history | same script, no `--days` | New holding, or catch-up from first transaction |
 
 ---

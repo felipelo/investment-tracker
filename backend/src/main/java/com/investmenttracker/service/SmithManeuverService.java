@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Read-only Smith Maneuver aggregation: derives HELOC owed balances, the investment-use balance,
+ * Read-only Smith Maneuver aggregation: derives credit-line owed balances, the investment-use balance,
  * traced percentages and the per-interest deductible estimate (REQUIREMENTS.md section 6.4).
  * This is a record-keeping estimate, not tax advice.
  */
@@ -32,7 +32,6 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class SmithManeuverService {
 
-    private static final String HELOC_TYPE = "HELOC";
     private static final int MONEY_SCALE = 4;
     private static final int PCT_SCALE = 2;
     private static final int FRACTION_SCALE = 6;
@@ -60,7 +59,7 @@ public class SmithManeuverService {
         }
 
         var helocAccounts = accountRepository.findByPortfolioIdOrderByLabelAsc(portfolioId).stream()
-                .filter(a -> HELOC_TYPE.equalsIgnoreCase(a.getType()))
+                .filter(a -> Account.isCreditLine(a.getType()))
                 .toList();
         var cashTransactions = cashTransactionRepository.findByPortfolioId(portfolioId);
         var flows = flowRepository.findByPortfolioIdWithSteps(portfolioId);

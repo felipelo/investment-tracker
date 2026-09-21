@@ -7,6 +7,7 @@ Date: 2026-07-27
 Companion documents:
 
 - **Deploy guide:** [`AWS-DEPLOYMENT.md`](AWS-DEPLOYMENT.md)
+- **Artifact cookbook:** [`AWS-BUILD-AND-DEPLOY.md`](AWS-BUILD-AND-DEPLOY.md)
 - Local machine setup: [`MACHINE-SETUP.md`](MACHINE-SETUP.md)
 - Backend packaging / env vars: [`backend/README.md`](../backend/README.md)
 - Container build: [`backend/Dockerfile`](../backend/Dockerfile)

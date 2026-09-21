@@ -41,8 +41,8 @@ export default function SmithManeuverPage() {
           <h1 className="page-title">Smith Maneuver</h1>
           <p className="page-subtitle">
             {activePortfolio
-              ? `${activePortfolio.name} · borrow-to-invest tracing — HELOC deductible interest`
-              : 'Borrow-to-invest tracing · HELOC deductible interest'}
+              ? `${activePortfolio.name} · borrow-to-invest tracing — credit-line deductible interest`
+              : 'Borrow-to-invest tracing · credit-line deductible interest'}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -87,7 +87,7 @@ export default function SmithManeuverPage() {
                 <div className="card">
                   <p className="card-title">Investment-use balance</p>
                   <p className="card-value">{formatMoney(data.investmentUseBalance)}</p>
-                  <p className="card-meta">Traced HELOC principal for investment</p>
+                  <p className="card-meta">Traced borrowed principal for investment</p>
                 </div>
                 <div className="card">
                   {latestInterest ? (
@@ -112,7 +112,7 @@ export default function SmithManeuverPage() {
                     <>
                       <p className="card-title">Interest · deductible est.</p>
                       <p className="card-value card-value-sm">—</p>
-                      <p className="card-meta">No HELOC interest logged yet</p>
+                      <p className="card-meta">No credit-line interest logged yet</p>
                     </>
                   )}
                 </div>
@@ -120,8 +120,8 @@ export default function SmithManeuverPage() {
 
               {data.helocAccounts.length === 0 && data.flows.length === 0 && (
                 <div className="banner banner-info">
-                  No HELOC accounts yet. <Link to="/accounts">Add a HELOC account</Link> and record a
-                  HELOC draw to start tracing.
+                  No credit-line accounts yet. <Link to="/accounts">Add a HELOC or Margin account</Link> and
+                  record a draw to start tracing.
                 </div>
               )}
 
@@ -132,7 +132,7 @@ export default function SmithManeuverPage() {
               {data.flows.length === 0 && data.helocAccounts.length > 0 && (
                 <div className="card" style={{ marginBottom: '1.25rem' }}>
                   <p style={{ color: 'var(--text-muted)', margin: 0 }}>
-                    No flows yet. Use <strong>New flow</strong> to chain a HELOC draw through to a
+                    No flows yet. Use <strong>New flow</strong> to chain a credit-line draw through to a
                     purchase.
                   </p>
                 </div>

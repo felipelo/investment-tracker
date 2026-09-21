@@ -18,6 +18,7 @@ import type {
 } from '../api/types';
 import { formatMoney } from '../lib/actions';
 import { cashTypeMeta } from '../lib/cashTypes';
+import { hasCreditLine } from './AccountForm';
 
 type CashLeg = CashTransaction & { id: number; type: CashTransactionType };
 
@@ -67,7 +68,7 @@ export default function FlowFormModal({ portfolioId, flow, onClose }: FlowFormMo
   }, [onClose]);
 
   const helocAccounts = useMemo(
-    () => (accounts.data ?? []).filter((a) => a.type === 'HELOC'),
+    () => (accounts.data ?? []).filter((a) => hasCreditLine(a.type)),
     [accounts.data]
   );
 
@@ -149,7 +150,7 @@ export default function FlowFormModal({ portfolioId, flow, onClose }: FlowFormMo
         <form onSubmit={handleSubmit}>
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="flow-heloc">Source HELOC</label>
+              <label htmlFor="flow-heloc">Source account</label>
               <select
                 id="flow-heloc"
                 value={helocAccountId}
@@ -157,7 +158,7 @@ export default function FlowFormModal({ portfolioId, flow, onClose }: FlowFormMo
                 required
               >
                 <option value="" disabled>
-                  {helocAccounts.length === 0 ? 'No HELOC accounts' : 'Select a HELOC account'}
+                  {helocAccounts.length === 0 ? 'No credit-line accounts' : 'Select a credit-line account'}
                 </option>
                 {helocAccounts.map((account) => (
                   <option key={account.id} value={account.id}>

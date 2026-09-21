@@ -22,8 +22,6 @@ import java.util.List;
 @Transactional
 public class SmithManeuverFlowService {
 
-    private static final String HELOC_TYPE = "HELOC";
-
     private final SmithManeuverFlowRepository flowRepository;
     private final PortfolioRepository portfolioRepository;
     private final AccountRepository accountRepository;
@@ -111,8 +109,8 @@ public class SmithManeuverFlowService {
             if (portfolioExists && !heloc.getPortfolio().getId().equals(request.portfolioId())) {
                 errors.put("helocAccountId", "Account does not belong to this portfolio");
             }
-            if (!HELOC_TYPE.equalsIgnoreCase(heloc.getType())) {
-                errors.put("helocAccountId", "Source account must be a HELOC account");
+            if (!Account.isCreditLine(heloc.getType())) {
+                errors.put("helocAccountId", "Source account must be a HELOC or Margin account");
             }
         }
 

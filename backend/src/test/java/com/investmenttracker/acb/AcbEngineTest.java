@@ -49,6 +49,35 @@ class AcbEngineTest {
     }
 
     @Test
+    void mergedHistoriesUseBlendedAcbOnDisposition() {
+        // Same security bought in two taxable portfolios, then sold from one:
+        // 100 @ 10 + 100 @ 30 => pooled ACB/share 20, so selling 50 disposes 1000 not 500.
+        var rows = AcbEngine.compute(List.of(
+                txn(1, "2024-01-01", Action.BUY, 100, "10.00", "0"),
+                txn(2, "2024-02-01", Action.BUY, 100, "30.00", "0"),
+                txn(3, "2024-06-01", Action.SELL, 50, "40.00", "0")
+        ));
+
+        var sell = rows.get(2);
+        assertEquals(new BigDecimal("2000.0000"), sell.proceeds());
+        assertEquals(new BigDecimal("1000.0000"), sell.capitalGainLoss());
+        assertEquals(new BigDecimal("3000.0000"), sell.totalAcb());
+        assertMoney("20.00", sell.acbPerShare());
+    }
+
+    @Test
+    void mergedHistoriesFlagSuperficialLossFromLaterBuy() {
+        var rows = AcbEngine.compute(List.of(
+                txn(1, "2024-01-01", Action.BUY, 100, "20.00", "0"),
+                txn(2, "2024-06-01", Action.SELL, 50, "10.00", "0"),
+                txn(3, "2024-06-15", Action.BUY, 50, "15.00", "0")
+        ));
+
+        assertTrue(rows.get(1).capitalGainLoss().compareTo(BigDecimal.ZERO) < 0);
+        assertTrue(rows.get(1).superficialLossFlag());
+    }
+
+    @Test
     void returnOfCapitalReducesAcbWithoutChangingShares() {
         var rows = AcbEngine.compute(List.of(
                 txn(1, "2024-01-01", Action.BUY, 500, "31.20", "10"),

@@ -31,7 +31,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -97,11 +99,12 @@ class TaxSummaryControllerTest {
         createFlow(heloc.getId(), "Flow 2025", "9500.00", List.of(draw.getId()), flowBuy.getId())
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/v1/portfolios/{id}/tax-summary", portfolioId()))
+        mockMvc.perform(get("/api/v1/portfolios/tax-summary"))
                 .andExpect(status().isOk())
                 // resolves to the most recent year with activity
                 .andExpect(jsonPath("$.year").value(2025))
                 .andExpect(jsonPath("$.availableYears", contains(2025, 2024)))
+                .andExpect(jsonPath("$.portfolioNames", hasItem("Default Portfolio")))
                 // realized gains: only the XEI disposition
                 .andExpect(jsonPath("$.realizedGains.rows", hasSize(1)))
                 .andExpect(jsonPath("$.realizedGains.rows[0].ticker").value("TSE:XEI"))
@@ -135,7 +138,7 @@ class TaxSummaryControllerTest {
         createSell(margin, xei, "2025-06-01", 50, "30.00");
         createDividend(xei, "2024-03-15", "40.00", "0");
 
-        mockMvc.perform(get("/api/v1/portfolios/{id}/tax-summary", portfolioId())
+        mockMvc.perform(get("/api/v1/portfolios/tax-summary")
                         .param("year", "2024"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.year").value(2024))
@@ -146,14 +149,92 @@ class TaxSummaryControllerTest {
                 .andExpect(jsonPath("$.interest.months", hasSize(0)));
     }
 
+    @Test
+    void taxSummaryPoolsAcbAcrossTaxablePortfolios() throws Exception {
+        var defaultMargin = createAccount(defaultPortfolio(), "Default Margin", "Margin");
+        var other = createPortfolio("Other Taxable", "Taxable");
+        var otherMargin = createAccount(other, "Other Margin", "Margin");
+        var xei = requireSecurity("TSE:XEI");
+
+        createBuy(defaultMargin, xei, "2025-01-01", 100, "10.00");
+        createBuy(otherMargin, xei, "2025-02-01", 100, "30.00");
+        createSell(defaultMargin, xei, "2025-06-01", 50, "40.00");
+
+        mockMvc.perform(get("/api/v1/portfolios/tax-summary").param("year", "2025"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.realizedGains.rows", hasSize(1)))
+                .andExpect(jsonPath("$.realizedGains.rows[0].ticker").value("TSE:XEI"))
+                .andExpect(jsonPath("$.realizedGains.rows[0].dispositions").value(1))
+                .andExpect(jsonPath("$.realizedGains.rows[0].proceeds").value(2000.0000))
+                .andExpect(jsonPath("$.realizedGains.rows[0].acbDisposed").value(1000.0000))
+                .andExpect(jsonPath("$.realizedGains.rows[0].gainLoss").value(1000.0000));
+    }
+
+    @Test
+    void taxSummaryExcludesRegisteredPortfoliosFromAcbPoolAndDividends() throws Exception {
+        var defaultMargin = createAccount(defaultPortfolio(), "Default Margin", "Margin");
+        var tfsa = createPortfolio("Wealthsimple TFSA", "TFSA");
+        var tfsaAccount = createAccount(tfsa, "TFSA", "TFSA");
+        var xei = requireSecurity("TSE:XEI");
+
+        createBuy(defaultMargin, xei, "2025-01-01", 100, "10.00");
+        createBuy(tfsaAccount, xei, "2025-02-01", 100, "100.00");
+        createSell(defaultMargin, xei, "2025-06-01", 50, "20.00");
+        createDividend(tfsa, xei, "2025-03-15", "200.00", "0");
+        createDividend(defaultPortfolio(), xei, "2025-03-15", "40.00", "0");
+
+        mockMvc.perform(get("/api/v1/portfolios/tax-summary").param("year", "2025"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.portfolioNames", hasItem("Default Portfolio")))
+                .andExpect(jsonPath("$.portfolioNames", not(hasItem("Wealthsimple TFSA"))))
+                .andExpect(jsonPath("$.realizedGains.rows", hasSize(1)))
+                .andExpect(jsonPath("$.realizedGains.rows[0].proceeds").value(1000.0000))
+                .andExpect(jsonPath("$.realizedGains.rows[0].acbDisposed").value(500.0000))
+                .andExpect(jsonPath("$.realizedGains.rows[0].gainLoss").value(500.0000))
+                .andExpect(jsonPath("$.dividends.rows", hasSize(1)))
+                .andExpect(jsonPath("$.dividends.rows[0].net").value(40.0000));
+    }
+
+    @Test
+    void taxSummaryUsesPooledAcbWhenRepurchaseInAnotherTaxablePortfolioIsInsideSuperficialLossWindow()
+            throws Exception {
+        var defaultMargin = createAccount(defaultPortfolio(), "Default Margin", "Margin");
+        var other = createPortfolio("Other Taxable", "Taxable");
+        var otherMargin = createAccount(other, "Other Margin", "Margin");
+        var xei = requireSecurity("TSE:XEI");
+
+        createBuy(defaultMargin, xei, "2025-01-01", 100, "20.00");
+        createBuy(otherMargin, xei, "2025-01-10", 50, "30.00");
+        createSell(defaultMargin, xei, "2025-01-20", 50, "10.00");
+
+        mockMvc.perform(get("/api/v1/portfolios/tax-summary").param("year", "2025"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.realizedGains.rows", hasSize(1)))
+                .andExpect(jsonPath("$.realizedGains.rows[0].proceeds").value(500.0000))
+                .andExpect(jsonPath("$.realizedGains.rows[0].acbDisposed").value(1166.6667))
+                .andExpect(jsonPath("$.realizedGains.rows[0].gainLoss").value(-666.6667));
+    }
+
     private Account createAccount(String label, String type) {
+        return createAccount(defaultPortfolio(), label, type);
+    }
+
+    private Account createAccount(Portfolio portfolio, String label, String type) {
         var account = new Account();
-        account.setPortfolio(defaultPortfolio());
+        account.setPortfolio(portfolio);
         account.setLabel(label);
         account.setType(type);
         account.setCurrency("CAD");
         account.setOpeningBalance(BigDecimal.ZERO);
         return accountRepository.save(account);
+    }
+
+    private Portfolio createPortfolio(String name, String type) {
+        var portfolio = new Portfolio();
+        portfolio.setName(name);
+        portfolio.setBaseCurrency("CAD");
+        portfolio.setType(type);
+        return portfolioRepository.save(portfolio);
     }
 
     private SecurityTransaction createBuy(Account account, Security security, String date, long shares, String price) {
@@ -184,8 +265,18 @@ class TaxSummaryControllerTest {
     }
 
     private void createDividend(Security security, String date, String gross, String withholding) {
+        createDividend(defaultPortfolio(), security, date, gross, withholding);
+    }
+
+    private void createDividend(
+            Portfolio portfolio,
+            Security security,
+            String date,
+            String gross,
+            String withholding
+    ) {
         var dividend = new Dividend();
-        dividend.setPortfolio(defaultPortfolio());
+        dividend.setPortfolio(portfolio);
         dividend.setSecurity(security);
         dividend.setPaymentDate(LocalDate.parse(date));
         dividend.setGrossAmount(new BigDecimal(gross));

@@ -39,4 +39,17 @@ public interface PriceSnapshotRepository extends JpaRepository<PriceSnapshot, Lo
             )
             """)
     List<PriceSnapshot> findLatestPerSecurityAsOf(@Param("asOf") LocalDate asOf);
+
+    /** Full price history for the given securities up to {@code through}, for time-weighted return chaining. */
+    @Query("""
+            SELECT p FROM PriceSnapshot p
+            JOIN FETCH p.security
+            WHERE p.security.id IN :securityIds
+              AND p.snapshotDate <= :through
+            ORDER BY p.snapshotDate ASC
+            """)
+    List<PriceSnapshot> findBySecurityIdsThrough(
+            @Param("securityIds") java.util.Collection<Long> securityIds,
+            @Param("through") LocalDate through
+    );
 }

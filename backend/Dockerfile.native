@@ -25,7 +25,8 @@ COPY backend/src/ src/
 # /api/v1 base URL: no CORS, no second host, one credential prompt.
 COPY --from=web /web/dist/ src/main/resources/static/
 # The `native` profile is provided by spring-boot-starter-parent.
-RUN ./mvnw -B -Pnative native:compile -DskipTests
+ARG DEPLOY_VERSION=dev
+RUN ./mvnw -B -Pnative native:compile -DskipTests -Ddeploy.version=${DEPLOY_VERSION}
 
 # --- Runtime stage ---
 # distroless/base provides glibc, libssl and tzdata for the dynamically linked binary;

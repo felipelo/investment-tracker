@@ -2,3 +2,11 @@
 .cursor
 .vscode
 scripts/.venv
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+.claude/
+.mcp.json
+scripts/__pycache__/
+frontend/tsconfig.app.tsbuildinfo
+

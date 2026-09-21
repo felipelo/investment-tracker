@@ -4,7 +4,9 @@
 #   docker build -f backend/Dockerfile -t investment-tracker:jvm .
 
 # --- Frontend stage ---
-FROM node:24 AS web
+# Pinned to the builder's native arch: the output is static JS/CSS, and esbuild's
+# Go service crashes when run under x86-on-arm64 emulation.
+FROM --platform=$BUILDPLATFORM node:24 AS web
 WORKDIR /web
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
@@ -24,7 +26,8 @@ COPY backend/src/ src/
 # Serving the bundle from the API's own origin is what lets the SPA keep its relative
 # /api/v1 base URL: no CORS, no second host, one credential prompt.
 COPY --from=web /web/dist/ src/main/resources/static/
-RUN ./mvnw -B clean package -DskipTests
+ARG DEPLOY_VERSION=dev
+RUN ./mvnw -B clean package -DskipTests -Ddeploy.version=${DEPLOY_VERSION}
 
 # --- Runtime stage ---
 FROM eclipse-temurin:25-jre AS runtime

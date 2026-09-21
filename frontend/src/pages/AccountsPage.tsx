@@ -227,8 +227,7 @@ function CreditLineCard({ account }: { account: Account }) {
         />
       </div>
       <p className="card-meta">
-        HELOC credit limit &amp; interest rate feed the Smith Maneuver deductible-interest
-        estimate.
+        Credit limit &amp; interest rate feed the Smith Maneuver deductible-interest estimate.
       </p>
     </div>
   );

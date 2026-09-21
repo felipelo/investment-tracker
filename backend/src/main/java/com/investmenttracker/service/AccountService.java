@@ -20,8 +20,6 @@ import java.util.Map;
 @Transactional
 public class AccountService {
 
-    private static final java.util.Set<String> CREDIT_LINE_TYPES = java.util.Set.of("HELOC", "Margin");
-
     private final AccountRepository accountRepository;
     private final PortfolioRepository portfolioRepository;
     private final SecurityTransactionRepository securityTransactionRepository;
@@ -101,7 +99,7 @@ public class AccountService {
     static BigDecimal deriveBalance(String type, BigDecimal openingBalance, BigDecimal netMovement) {
         BigDecimal opening = openingBalance == null ? BigDecimal.ZERO : openingBalance;
         BigDecimal net = netMovement == null ? BigDecimal.ZERO : netMovement;
-        return CREDIT_LINE_TYPES.contains(type) ? opening.subtract(net) : opening.add(net);
+        return Account.isCreditLine(type) ? opening.subtract(net) : opening.add(net);
     }
 
     public void delete(Long id) {
@@ -146,7 +144,7 @@ public class AccountService {
             BigDecimal creditLimit,
             BigDecimal interestRate
     ) {
-        if (CREDIT_LINE_TYPES.contains(type)) {
+        if (Account.isCreditLine(type)) {
             account.setCreditLimit(creditLimit);
             account.setInterestRate(interestRate);
         } else {

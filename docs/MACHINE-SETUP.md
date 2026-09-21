@@ -156,3 +156,17 @@ cd backend && ./mvnw verify   # 113 tests, BUILD SUCCESS
 
 If `./mvnw verify` passes you have a working build environment; if `native-image --version` also
 works, you can produce the native image.
+
+---
+
+## 9. AWS CLI (deploy from this Mac)
+
+Needed only if you will push images and manage App Runner / RDS from the laptop. Install and sign in:
+
+```bash
+brew install awscli
+aws configure    # region for the live personal deploy: us-east-1
+aws sts get-caller-identity
+```
+
+Build and deploy commands for each AWS artifact: [AWS-BUILD-AND-DEPLOY.md](AWS-BUILD-AND-DEPLOY.md).

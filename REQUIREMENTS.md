@@ -17,7 +17,7 @@ Primary goals:
 - Track one or more portfolios, each with its own accounts, holdings, dividends, and money flows.
 - Replace ad-hoc spreadsheet tracking with structured, queryable data and a clear dashboard.
 - Maintain an accurate Adjusted Cost Base (ACB) per security so capital gains and losses can be reported correctly at tax time.
-- Trace the flow of borrowed money (HELOC) into investments to support the interest-deductibility record-keeping that the Smith Maneuver depends on.
+- Trace the flow of borrowed money (HELOC or Margin) into investments to support the interest-deductibility record-keeping that the Smith Maneuver depends on.
 - Present per-portfolio analytics (allocation, returns over multiple periods, dividend history) in a dashboard.
 
 Non-goals for the first version are listed in Section 2.
@@ -32,7 +32,7 @@ Non-goals for the first version are listed in Section 2.
 - Mostly manual data entry for transactions, dividends, transfers, and prices.
 - Multiple portfolios with accounts, holdings, dividends, and money-flow transactions.
 - ACB tracking and Canadian capital-gains reporting support.
-- Smith Maneuver money-flow tracing, HELOC interest logging, and deductible-interest estimation.
+- Smith Maneuver money-flow tracing, credit-line interest logging, and deductible-interest estimation.
 - A per-portfolio dashboard modeled on the reference design (Section 5).
 - CSV/JSON export of transactions and tax summaries.
 
@@ -89,7 +89,7 @@ A money container within a portfolio. Accounts hold cash and/or securities and r
 - Currency (default `CAD`).
 - Opening balance and opening balance date.
 - Current balance: derived from opening balance plus all cash transactions and transfer legs.
-- For `HELOC` accounts: credit limit (optional), interest rate (see Section 6 / Smith Maneuver).
+- For `HELOC` and `Margin` accounts: credit limit (optional), interest rate (see Section 6 / Smith Maneuver).
 
 ### 3.4 Security
 
@@ -164,9 +164,9 @@ Records dividend or distribution income received.
 
 ### 3.10 Smith Maneuver flow
 
-A traceable link describing how borrowed funds moved from a HELOC into investments. See Section 6.4 for the rules.
+A traceable link describing how borrowed funds moved from a HELOC or Margin credit line into investments. See Section 6.4 for the rules.
 
-- Source HELOC account.
+- Source HELOC or Margin account.
 - Ordered chain of linked cash transactions (draw -> intermediate transfers -> investment deposit -> optional buy).
 - Investment-use amount (the portion of the draw deemed used for income-producing investment).
 - Status: `Traced`, `Partially traced`, `Untraced`.
@@ -194,7 +194,7 @@ These snapshots are the basis for the dashboard's period-return widgets (Section
 | Dividends            | Record dividends with gross, withholding, and net. Optionally mark as DRIP and link the reinvestment. Dividends feed the monthly dividend report and chart.                                               |
 | Transfers            | Record inter-account transfers as balanced double-entry legs. Tag purpose as `Investment` or `Personal`.                                                                                                  |
 | Cash transactions    | Record deposits, withdrawals, fees, HELOC draws/repayments, and interest charges/payments.                                                                                                                |
-| Smith Maneuver       | Build and view the borrow-to-invest flow chain; log HELOC interest; estimate the deductible portion of interest from the traced investment-use balance. Warn on untraced or mixed-use funds.              |
+| Smith Maneuver       | Build and view the borrow-to-invest flow chain; log HELOC or Margin interest; estimate the deductible portion of interest from the traced investment-use balance. Warn on untraced or mixed-use funds.    |
 | ACB / tax            | Maintain running ACB per security; compute realized gains/losses on sells; flag possible superficial losses; allow manual denied-loss adjustments; produce a tax-year summary and export.                 |
 | Prices and snapshots | Enter per-security prices and/or portfolio market-value snapshots used by dashboard returns.                                                                                                              |
 | Dashboard            | Present per-portfolio widgets matching the reference design (Section 5).                                                                                                                                  |
@@ -277,12 +277,12 @@ These mirror the workbook's `Superficial Loss Flag` and `Denied Loss Adj` column
 
 ### 6.4 Smith Maneuver: money-flow tracing and deductible interest
 
-The Smith Maneuver borrows against home equity (HELOC) to invest in income-producing assets, making the loan interest potentially tax-deductible. Deductibility depends on tracing borrowed funds to eligible investment use. V1 supports:
+The Smith Maneuver borrows against home equity (HELOC) — and, in this tracker, other credit lines such as Margin — to invest in income-producing assets, making the loan interest potentially tax-deductible. Deductibility depends on tracing borrowed funds to eligible investment use. V1 supports:
 
-- Money-flow tracing: link a `HELOC Draw` through any intermediate `Transfer` legs to an investment-account deposit and, ideally, to the resulting `Buy`. Each leg carries the `Investment` vs `Personal` purpose tag.
-- Investment-use balance: the running total of HELOC principal traced to investment purposes. Draws tagged `Personal` or left untraced do not count toward the deductible base.
-- HELOC interest log: record `Interest Charge`/`Interest Payment` entries on the HELOC account, with the period and amount.
-- Deductible-interest estimate: for a given interest entry, estimate the deductible portion as the share of the HELOC balance attributable to traced investment use during that period.
+- Money-flow tracing: link a `HELOC Draw` from a HELOC or Margin account through any intermediate `Transfer` legs to an investment-account deposit and, ideally, to the resulting `Buy`. Each leg carries the `Investment` vs `Personal` purpose tag. Cash type names stay `HELOC Draw` / `HELOC Repayment` for either source.
+- Investment-use balance: the running total of credit-line principal traced to investment purposes. Draws tagged `Personal` or left untraced do not count toward the deductible base.
+- Credit-line interest log: record `Interest Charge`/`Interest Payment` entries on the HELOC or Margin account, with the period and amount.
+- Deductible-interest estimate: for a given interest entry, estimate the deductible portion as the share of the credit-line balance attributable to traced investment use during that period.
 - Warnings: surface when funds are `Untraced` or when an account mixes investment and personal balances in a way that weakens the deductibility assumption, since commingling complicates tracing.
 
 Document clearly that this is a record-keeping and estimation aid, not tax advice.
@@ -335,10 +335,10 @@ The application is a calculator and record-keeping tool, not tax advice. Users s
 
 ### 8.3 Smith Maneuver cycle
 
-1. Record a `HELOC Draw` on the HELOC account, tagged `Investment`.
+1. Record a `HELOC Draw` on the HELOC or Margin account, tagged `Investment`.
 2. Transfer the funds to chequing, then to the investment account (linked legs).
 3. Record the `Buy` of the income-producing asset.
-4. Each month, log the HELOC `Interest Charge`/`Interest Payment`.
+4. Each month, log the credit-line `Interest Charge`/`Interest Payment`.
 5. View the deductible-interest estimate based on the traced investment-use balance.
 6. At year-end, export the deductible-interest summary for tax filing.
 
@@ -368,9 +368,9 @@ Deferred decisions that do not block V1:
 - ROC (Return of Capital): a distribution that is not income; it reduces ACB rather than being taxed immediately.
 - Reinvested / phantom distribution: a distribution reinvested without cash changing hands (common with ETFs); it increases ACB.
 - Superficial loss: a loss disallowed by the CRA when the same (or identical) property is bought within 30 days before or after a sale and still held; the denied loss is added to the ACB of the repurchased property.
-- Smith Maneuver: a Canadian strategy of borrowing against home equity (HELOC) to invest in income-producing assets, potentially making the loan interest tax-deductible.
+- Smith Maneuver: a Canadian strategy of borrowing against home equity (HELOC) — and, in this tracker, other investment credit lines such as Margin — to invest in income-producing assets, potentially making the loan interest tax-deductible.
 - DRIP (Dividend Reinvestment Plan): automatic reinvestment of dividends into additional shares.
-- HELOC (Home Equity Line of Credit): a revolving credit line secured against home equity, used here as the borrowing source for the Smith Maneuver.
+- HELOC (Home Equity Line of Credit): a revolving credit line secured against home equity; together with Margin, a borrowing source for Smith Maneuver tracing.
 - Deductible interest: the portion of loan interest attributable to funds used to earn investment income, which may be tax-deductible.
 
 ---

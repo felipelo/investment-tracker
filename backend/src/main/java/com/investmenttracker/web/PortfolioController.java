@@ -74,6 +74,14 @@ public class PortfolioController {
         return dividendService.summaryAll(year);
     }
 
+    @GetMapping("/tax-summary")
+    @Operation(summary = "Realized gains, dividend income and interest summary for a tax year across taxable portfolios")
+    public TaxSummaryResponse getTaxSummary(
+            @RequestParam(required = false) Integer year
+    ) {
+        return taxSummaryService.summary(year);
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get a single portfolio with derived metrics")
     public PortfolioResponse getPortfolio(@PathVariable Long id) {
@@ -116,14 +124,5 @@ public class PortfolioController {
             @RequestParam(required = false) Integer year
     ) {
         return dividendService.summary(id, year);
-    }
-
-    @GetMapping("/{id}/tax-summary")
-    @Operation(summary = "Realized gains, dividend income and interest summary for a tax year")
-    public TaxSummaryResponse getTaxSummary(
-            @PathVariable Long id,
-            @RequestParam(required = false) Integer year
-    ) {
-        return taxSummaryService.summary(id, year);
     }
 }

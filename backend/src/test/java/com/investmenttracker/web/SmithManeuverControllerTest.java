@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -73,12 +74,12 @@ class SmithManeuverControllerTest {
     @Test
     void tracedFlowDrivesInvestmentUseBalanceAndDeductibleEstimate() throws Exception {
         var heloc = createAccount("TD HELOC", "HELOC");
-        var margin = createAccount("Questrade Margin", "Margin");
+        var investment = createAccount("Questrade TFSA", "Investment (cash)");
 
         // 9,500 investment draw + 500 interest => owed 10,000, traced fraction 0.95.
         var draw = createCash(heloc, CashTransactionType.HELOC_DRAW, "2026-05-01", "-9500.00", CashPurpose.INVESTMENT);
         createCash(heloc, CashTransactionType.INTEREST_CHARGE, "2026-05-31", "-500.00", null);
-        var buy = createBuy(margin, "2026-05-01", 500, "31.20");
+        var buy = createBuy(investment, "2026-05-01", 500, "31.20");
 
         createFlow(heloc.getId(), "Flow #2024-03", "9500.00", List.of(draw.getId()), buy.getId())
                 .andExpect(status().isCreated())
@@ -93,10 +94,9 @@ class SmithManeuverControllerTest {
                 .andExpect(jsonPath("$.investmentUseBalance").value(9500.0000))
                 .andExpect(jsonPath("$.flows", hasSize(1)))
                 .andExpect(jsonPath("$.flows[0].status").value("TRACED"))
-                .andExpect(jsonPath("$.helocAccounts", hasSize(1)))
-                .andExpect(jsonPath("$.helocAccounts[0].balance").value(10000.0000))
-                .andExpect(jsonPath("$.helocAccounts[0].tracedPct").value(95.00))
-                .andExpect(jsonPath("$.helocAccounts[0].status").value("Mostly traced"))
+                .andExpect(jsonPath("$.helocAccounts[?(@.label == 'TD HELOC')].balance").value(hasItem(10000.0000)))
+                .andExpect(jsonPath("$.helocAccounts[?(@.label == 'TD HELOC')].tracedPct").value(hasItem(95.00)))
+                .andExpect(jsonPath("$.helocAccounts[?(@.label == 'TD HELOC')].status").value(hasItem("Mostly traced")))
                 .andExpect(jsonPath("$.interestLog", hasSize(1)))
                 // 500 * (9500 / 10000) = 475
                 .andExpect(jsonPath("$.interestLog[0].deductibleEstimate").value(475.0000));
@@ -124,7 +124,29 @@ class SmithManeuverControllerTest {
 
         createFlow(chequing.getId(), "Bad", "100.00", List.of(draw.getId()), null)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.helocAccountId").value("Source account must be a HELOC account"));
+                .andExpect(jsonPath("$.errors.helocAccountId").value("Source account must be a HELOC or Margin account"));
+    }
+
+    @Test
+    void marginSourceTracesInvestmentUse() throws Exception {
+        var margin = requireAccount("Questrade Margin");
+        var investment = createAccount("Questrade TFSA", "Investment (cash)");
+        var draw = createCash(margin, CashTransactionType.HELOC_DRAW, "2026-05-01", "-8000.00", CashPurpose.INVESTMENT);
+        var buy = createBuy(investment, "2026-05-01", 250, "31.20");
+
+        createFlow(margin.getId(), "Margin flow", "8000.00", List.of(draw.getId()), buy.getId())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("TRACED"));
+
+        mockMvc.perform(get("/api/v1/portfolios/{id}/smith-maneuver", portfolioId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.investmentUseBalance").value(8000.0000))
+                .andExpect(jsonPath("$.helocAccounts", hasSize(1)))
+                .andExpect(jsonPath("$.helocAccounts[0].label").value("Questrade Margin"))
+                .andExpect(jsonPath("$.helocAccounts[0].balance").value(8000.0000))
+                .andExpect(jsonPath("$.helocAccounts[0].investmentUseBalance").value(8000.0000))
+                .andExpect(jsonPath("$.helocAccounts[0].tracedPct").value(100.00))
+                .andExpect(jsonPath("$.helocAccounts[0].status").value("Fully traced"));
     }
 
     @Test
@@ -154,6 +176,13 @@ class SmithManeuverControllerTest {
         return mockMvc.perform(post("/api/v1/smith-maneuver-flows")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)));
+    }
+
+    private Account requireAccount(String label) {
+        return accountRepository.findByPortfolioIdOrderByLabelAsc(portfolioId()).stream()
+                .filter(a -> label.equals(a.getLabel()))
+                .findFirst()
+                .orElseThrow();
     }
 
     private Account createAccount(String label, String type) {

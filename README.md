@@ -6,7 +6,7 @@ This repository currently contains requirements only. See [REQUIREMENTS.md](REQU
 
 To get a machine ready to build and run this repo, see [docs/MACHINE-SETUP.md](docs/MACHINE-SETUP.md).
 
-To deploy to AWS (App Runner + RDS), see [docs/AWS-DEPLOYMENT.md](docs/AWS-DEPLOYMENT.md). Nightly price snapshots: [docs/AWS-PRICE-BACKFILL.md](docs/AWS-PRICE-BACKFILL.md).
+To deploy to AWS (App Runner + RDS), see [docs/AWS-DEPLOYMENT.md](docs/AWS-DEPLOYMENT.md). Artifact-by-artifact build and deploy commands (CLI, RDS, app image, nightly backfill, password rotate, local→RDS dump): [docs/AWS-BUILD-AND-DEPLOY.md](docs/AWS-BUILD-AND-DEPLOY.md). After the first create, rebuild and roll out with `./scripts/update_aws.sh`. Nightly price snapshots: [docs/AWS-PRICE-BACKFILL.md](docs/AWS-PRICE-BACKFILL.md).
 
 ## Implementation plans
 

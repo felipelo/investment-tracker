@@ -1,11 +1,12 @@
 package com.investmenttracker.service;
 
 import com.investmenttracker.acb.AcbEngine;
-import com.investmenttracker.acb.ComputedTransactionRow;
 import com.investmenttracker.acb.SecurityTransactionInput;
 import com.investmenttracker.acb.SecurityTransactionInputs;
 import com.investmenttracker.domain.Action;
 import com.investmenttracker.domain.Dividend;
+import com.investmenttracker.domain.Portfolio;
+import com.investmenttracker.domain.PortfolioTaxTreatment;
 import com.investmenttracker.domain.Security;
 import com.investmenttracker.domain.SecurityTransaction;
 import com.investmenttracker.repository.DividendRepository;
@@ -36,9 +37,10 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
- * Read-only per-tax-year aggregation (REQUIREMENTS.md section 6.6): realized capital
- * gains by security, dividend income by security, and the Smith Maneuver interest
- * summary by month. A record-keeping aid, not tax advice (REQUIREMENTS.md section 6.7).
+ * Read-only per-tax-year aggregation across taxable (non-registered) portfolios
+ * (REQUIREMENTS.md section 6.6): realized capital gains by security with CRA ACB
+ * pooling, dividend income by security, and the Smith Maneuver interest summary
+ * by month. A record-keeping aid, not tax advice (REQUIREMENTS.md section 6.7).
  */
 @Service
 @Transactional(readOnly = true)
@@ -63,23 +65,32 @@ public class TaxSummaryService {
         this.portfolioRepository = portfolioRepository;
     }
 
-    public TaxSummaryResponse summary(Long portfolioId, Integer year) {
-        if (!portfolioRepository.existsById(portfolioId)) {
-            throw new NotFoundException("Portfolio", portfolioId);
+    public TaxSummaryResponse summary(Integer year) {
+        var taxablePortfolios = portfolioRepository.findAllByOrderByNameAsc().stream()
+                .filter(PortfolioTaxTreatment::isTaxable)
+                .toList();
+        var taxableIds = taxablePortfolios.stream().map(Portfolio::getId).toList();
+        var portfolioNames = taxablePortfolios.stream().map(Portfolio::getName).toList();
+
+        var transactions = taxableIds.isEmpty()
+                ? List.<SecurityTransaction>of()
+                : securityTransactionRepository.findAllForHoldingsByPortfolioIds(taxableIds);
+        var transactionsBySecurity = groupBySecurity(transactions);
+
+        var interestLog = new ArrayList<InterestEntryResponse>();
+        for (var portfolioId : taxableIds) {
+            interestLog.addAll(smithManeuverService.getSmithManeuver(portfolioId).interestLog());
         }
 
-        var transactionsBySecurity = groupBySecurity(
-                securityTransactionRepository.findAllForHoldingsByPortfolio(portfolioId));
-        var interestLog = smithManeuverService.getSmithManeuver(portfolioId).interestLog();
-
-        var availableYears = collectAvailableYears(portfolioId, transactionsBySecurity, interestLog);
+        var availableYears = collectAvailableYears(taxableIds, transactionsBySecurity, interestLog);
         int resolvedYear = resolveYear(year, availableYears);
 
         return new TaxSummaryResponse(
                 resolvedYear,
                 availableYears,
+                portfolioNames,
                 buildRealizedGains(transactionsBySecurity, resolvedYear),
-                buildDividendIncome(portfolioId, resolvedYear),
+                buildDividendIncome(taxableIds, resolvedYear),
                 buildInterestSummary(interestLog, resolvedYear)
         );
     }
@@ -130,11 +141,13 @@ public class TaxSummaryService {
         return new RealizedGains(List.copyOf(rows), total);
     }
 
-    private DividendIncome buildDividendIncome(Long portfolioId, int year) {
+    private DividendIncome buildDividendIncome(List<Long> portfolioIds, int year) {
         var bySecurity = new LinkedHashMap<Long, DividendAccumulator>();
-        for (var dividend : dividendRepository.findByPortfolioIdAndYear(portfolioId, year)) {
-            var security = dividend.getSecurity();
-            bySecurity.computeIfAbsent(security.getId(), id -> new DividendAccumulator(security)).add(dividend);
+        for (var portfolioId : portfolioIds) {
+            for (var dividend : dividendRepository.findByPortfolioIdAndYear(portfolioId, year)) {
+                var security = dividend.getSecurity();
+                bySecurity.computeIfAbsent(security.getId(), id -> new DividendAccumulator(security)).add(dividend);
+            }
         }
 
         var rows = bySecurity.values().stream()
@@ -184,7 +197,7 @@ public class TaxSummaryService {
     }
 
     private List<Integer> collectAvailableYears(
-            Long portfolioId,
+            List<Long> portfolioIds,
             Map<Long, List<SecurityTransaction>> transactionsBySecurity,
             List<InterestEntryResponse> interestLog
     ) {
@@ -196,7 +209,9 @@ public class TaxSummaryService {
                 }
             }
         }
-        years.addAll(dividendRepository.findDistinctYears(portfolioId));
+        for (var portfolioId : portfolioIds) {
+            years.addAll(dividendRepository.findDistinctYears(portfolioId));
+        }
         for (var entry : interestLog) {
             years.add(entry.date().getYear());
         }

@@ -27,7 +27,7 @@ function formatPct(pct: string): string {
 export default function HelocAccountsTable({ accounts }: { accounts: HelocAccountSummary[] }) {
   return (
     <div className="card">
-      <p className="card-title">HELOC accounts</p>
+      <p className="card-title">Credit-line accounts</p>
       <div className="table-wrap">
         <table>
           <thead>

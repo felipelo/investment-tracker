@@ -18,15 +18,28 @@ interface Column {
   isAllTime: boolean;
 }
 
+const emptyColumn = (label: string): Column => ({
+  label,
+  price: null,
+  pricePct: null,
+  dividend: null,
+  dividendPct: null,
+  total: null,
+  pct: null,
+  available: false,
+  isAllTime: false,
+});
+
 function buildColumns(
   periodReturns: PeriodReturn[],
   todaysReturn: ReturnFigure | undefined,
   allTimePrice: ReturnFigure,
   allTimeDividend: ReturnFigure,
   allTimeTotal: { amount: string | null; pct: string | null; available: boolean },
+  periodLabels: string[],
 ): Column[] {
   const today = periodReturns.find((period) => period.label === 'Today');
-  const remainingPeriods = periodReturns.filter((period) => period.label !== 'Today');
+  const byLabel = new Map(periodReturns.map((period) => [period.label, period]));
   const toColumn = (period: PeriodReturn): Column => ({
     label: period.label,
     price: period.priceAmount,
@@ -52,9 +65,14 @@ function buildColumns(
         isAllTime: false,
       };
 
+  const periodColumns = periodLabels.map((label) => {
+    const period = byLabel.get(label);
+    return period ? toColumn(period) : emptyColumn(label);
+  });
+
   return [
     todayColumn,
-    ...remainingPeriods.map(toColumn),
+    ...periodColumns,
     {
       label: 'All-time',
       price: allTimePrice.amount,
@@ -103,12 +121,18 @@ export default function ReturnBreakdownTable({ dashboard }: ReturnBreakdownTable
     dividend: false,
   });
 
+  // A period the portfolio did not span yet comes back unavailable; drop the column instead of showing dashes.
+  const periodLabels = dashboard.periodReturns
+    .filter((period) => period.label !== 'Today' && period.available)
+    .map((period) => period.label);
+
   const columns = buildColumns(
     dashboard.periodReturns,
     dashboard.todaysReturn,
     dashboard.priceReturn,
     dashboard.dividendReturn,
     dashboard.allTimeReturn,
+    periodLabels,
   );
 
   const holdingColumns = dashboard.holdingBreakdowns.map((holding) => ({
@@ -120,6 +144,7 @@ export default function ReturnBreakdownTable({ dashboard }: ReturnBreakdownTable
       holding.dividendReturn,
       // Sub-rows only surface the price or dividend cell, so the total column is unused here.
       { amount: null, pct: null, available: false },
+      periodLabels,
     ),
   }));
 

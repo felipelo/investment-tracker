@@ -12,22 +12,13 @@ function triggerDownload(filename: string, mimeType: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
-function slug(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+function baseName(year: number): string {
+  return `tax-summary-all-taxable-${year}`;
 }
 
-function baseName(portfolioName: string, year: number): string {
-  const portfolio = slug(portfolioName) || 'portfolio';
-  return `tax-summary-${portfolio}-${year}`;
-}
-
-export function exportTaxSummaryJson(summary: TaxSummary, portfolioName: string) {
+export function exportTaxSummaryJson(summary: TaxSummary) {
   triggerDownload(
-    `${baseName(portfolioName, summary.year)}.json`,
+    `${baseName(summary.year)}.json`,
     'application/json',
     JSON.stringify(summary, null, 2),
   );
@@ -45,10 +36,10 @@ function toRow(cells: (string | number | null)[]): string {
   return cells.map(escapeCsv).join(',');
 }
 
-export function exportTaxSummaryCsv(summary: TaxSummary, portfolioName: string) {
+export function exportTaxSummaryCsv(summary: TaxSummary) {
   const lines: string[] = [];
 
-  lines.push(`Tax summary,${portfolioName},${summary.year}`);
+  lines.push(`Tax summary,all-taxable,${summary.year}`);
   lines.push('');
 
   lines.push('Realized gains & losses by security');
@@ -78,7 +69,7 @@ export function exportTaxSummaryCsv(summary: TaxSummary, portfolioName: string) 
   lines.push(toRow([it.month, it.charged, it.deductibleEstimate]));
 
   triggerDownload(
-    `${baseName(portfolioName, summary.year)}.csv`,
+    `${baseName(summary.year)}.csv`,
     'text/csv',
     lines.join('\n'),
   );

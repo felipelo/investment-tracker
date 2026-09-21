@@ -62,6 +62,13 @@ class SecurityConfigTest {
         mockMvc.perform(get("/actuator/health/readiness")).andExpect(status().isOk());
     }
 
+    @Test
+    void infoRequiresTheConfiguredCredential() throws Exception {
+        mockMvc.perform(get("/actuator/info")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/actuator/info").header("Authorization", basic(USERNAME, PASSWORD)))
+                .andExpect(status().isOk());
+    }
+
     private static String basic(String username, String password) {
         var credentials = (username + ":" + password).getBytes(StandardCharsets.UTF_8);
         return "Basic " + Base64.getEncoder().encodeToString(credentials);

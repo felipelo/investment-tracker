@@ -2,7 +2,9 @@
 
 Deploy Investment Tracker as **one container** (React SPA + Spring Boot API on the same origin) on **AWS App Runner**, with **RDS PostgreSQL 17**. Everything below is meant to be run from your laptop with the AWS CLI.
 
-Companion docs: [MACHINE-SETUP.md](MACHINE-SETUP.md) (local env vars / bcrypt), [AWS-DEPLOYMENT-PLAN.md](AWS-DEPLOYMENT-PLAN.md) (topology decisions), [backend/README.md](../backend/README.md) (Docker images), [AWS-PRICE-BACKFILL.md](AWS-PRICE-BACKFILL.md) (nightly yfinance → RDS).
+Companion docs: [MACHINE-SETUP.md](MACHINE-SETUP.md) (local env vars / bcrypt), [AWS-DEPLOYMENT-PLAN.md](AWS-DEPLOYMENT-PLAN.md) (topology decisions), [backend/README.md](../backend/README.md) (Docker images), [AWS-PRICE-BACKFILL.md](AWS-PRICE-BACKFILL.md) (nightly yfinance → RDS), [AWS-BUILD-AND-DEPLOY.md](AWS-BUILD-AND-DEPLOY.md) (artifact-by-artifact commands, including password rotate and local→RDS dump).
+
+The live personal deploy is in **`us-east-1`**. If you follow this file on that account, set `AWS_REGION=us-east-1` in section 3 instead of the `ca-central-1` example.
 
 ```mermaid
 flowchart LR
@@ -454,6 +456,10 @@ curl -sS -u "${APP_AUTH_USERNAME}:${APP_AUTH_PASSWORD}" \
 ---
 
 ## 12. Update / redeploy
+
+Preferred: [`scripts/update_aws.sh`](../scripts/update_aws.sh) (prompts for app / backfill / both; does not create infrastructure).
+
+By hand:
 
 ```bash
 cd /path/to/investment-tracker

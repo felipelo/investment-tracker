@@ -19,6 +19,7 @@
 
     <properties>
         <java.version>25</java.version>
+        <deploy.version>dev</deploy.version>
     </properties>
 
     <dependencies>
@@ -86,6 +87,18 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                        <configuration>
+                            <additionalProperties>
+                                <deploy.version>${deploy.version}</deploy.version>
+                            </additionalProperties>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <!--
                 ponytail: preserving all of Liquibase is blunt - it costs image size - but the

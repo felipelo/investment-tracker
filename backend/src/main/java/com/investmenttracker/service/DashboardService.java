@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
 @Transactional(readOnly = true)
@@ -63,9 +61,11 @@ public class DashboardService {
         var priceReturn = buildPriceReturn(metrics);
         var dividendReturn = buildDividendReturn(netDividends, metrics.invested());
         var today = LocalDate.now();
-        var todaysReturn = computeReturn(portfolioId, currentValue, today.minusDays(1));
-        var periodReturns = buildPeriodReturns(portfolioId, currentValue, today);
-        var holdingBreakdowns = buildHoldingBreakdowns(portfolioId, holdings, today);
+        var dividends = dividendRepository.findByPortfolioIdOrderByPaymentDateDesc(portfolioId);
+        var window = holdingService.performanceWindow(List.of(portfolioId), dividends, today);
+        var todaysReturn = todaysReturn(window, today);
+        var periodReturns = buildPeriodReturns(window, today);
+        var holdingBreakdowns = buildHoldingBreakdowns(window, holdings, today);
 
         return new DashboardResponse(
                 currentValue,
@@ -83,20 +83,21 @@ public class DashboardService {
 
     public DashboardResponse getOverallDashboard() {
         // ponytail: Reuse authoritative per-portfolio math; switch to bulk queries if portfolio counts grow.
-        var dashboards = portfolioRepository.findAllByOrderByNameAsc().stream()
-                .map(portfolio -> getDashboard(portfolio.getId()))
+        var portfolioIds = portfolioRepository.findAllByOrderByNameAsc().stream()
+                .map(portfolio -> portfolio.getId())
                 .toList();
+        var dashboards = portfolioIds.stream().map(this::getDashboard).toList();
         var currentValue = overallCurrentValue(dashboards);
         var invested = dashboards.stream()
                 .map(DashboardResponse::invested)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        var today = aggregateReturn(dashboards, currentValue, DashboardResponse::todaysReturn);
 
-        var periodReturns = dashboards.isEmpty()
-                ? List.<PeriodReturn>of()
-                : IntStream.range(0, dashboards.getFirst().periodReturns().size())
-                        .mapToObj(index -> aggregatePeriodReturn(dashboards, currentValue, index))
-                        .toList();
+        var asOfToday = LocalDate.now();
+        var dividends = portfolioIds.stream()
+                .map(dividendRepository::findByPortfolioIdOrderByPaymentDateDesc)
+                .flatMap(List::stream)
+                .toList();
+        var window = holdingService.performanceWindow(portfolioIds, dividends, asOfToday);
 
         return new DashboardResponse(
                 currentValue,
@@ -106,12 +107,12 @@ public class DashboardService {
                         .filter(Objects::nonNull)
                         .max(LocalDate::compareTo)
                         .orElse(null),
-                today,
+                todaysReturn(window, asOfToday),
                 aggregateAllTimeReturn(dashboards, currentValue, invested),
                 aggregateInvestedBasedReturn(dashboards, currentValue, invested, DashboardResponse::priceReturn),
                 aggregateInvestedBasedReturn(dashboards, currentValue, invested, DashboardResponse::dividendReturn),
-                periodReturns,
-                aggregateHoldingBreakdowns(dashboards),
+                buildPeriodReturns(window, asOfToday),
+                aggregateHoldingBreakdowns(dashboards, window, asOfToday),
                 aggregateAllocation(dashboards)
         );
     }
@@ -128,47 +129,6 @@ public class DashboardService {
             total = total == null ? dashboard.portfolioValue() : total.add(dashboard.portfolioValue());
         }
         return total;
-    }
-
-    private ReturnFigure aggregateReturn(
-            List<DashboardResponse> dashboards,
-            BigDecimal currentValue,
-            Function<DashboardResponse, ReturnFigure> figureProvider
-    ) {
-        if (currentValue == null) {
-            return ReturnFigure.unavailable();
-        }
-        BigDecimal amount = BigDecimal.ZERO;
-        BigDecimal basis = BigDecimal.ZERO;
-        LocalDate basisDate = null;
-        boolean mixedBasisDates = false;
-
-        for (var dashboard : dashboards) {
-            if (dashboard.portfolioValue() == null && dashboard.invested().compareTo(BigDecimal.ZERO) == 0) {
-                continue;
-            }
-            var figure = figureProvider.apply(dashboard);
-            if (!figure.available() || figure.amount() == null || dashboard.portfolioValue() == null) {
-                return ReturnFigure.unavailable();
-            }
-            amount = amount.add(figure.amount());
-            basis = basis.add(dashboard.portfolioValue().subtract(figure.amount()));
-            if (basisDate == null) {
-                basisDate = figure.basisDate();
-            } else if (!Objects.equals(basisDate, figure.basisDate())) {
-                mixedBasisDates = true;
-            }
-        }
-
-        var pct = basis.compareTo(BigDecimal.ZERO) == 0
-                ? null
-                : amount.multiply(BigDecimal.valueOf(100)).divide(basis, PCT_SCALE, RoundingMode.HALF_UP);
-        return new ReturnFigure(
-                amount.setScale(MONEY_SCALE, RoundingMode.HALF_UP),
-                pct,
-                mixedBasisDates ? null : basisDate,
-                true
-        );
     }
 
     private ReturnFigure aggregateAllTimeReturn(
@@ -204,52 +164,6 @@ public class DashboardService {
                 ? null
                 : amount.multiply(BigDecimal.valueOf(100)).divide(invested, PCT_SCALE, RoundingMode.HALF_UP);
         return new ReturnFigure(amount.setScale(MONEY_SCALE, RoundingMode.HALF_UP), pct, null, true);
-    }
-
-    private PeriodReturn aggregatePeriodReturn(
-            List<DashboardResponse> dashboards,
-            BigDecimal currentValue,
-            int index
-    ) {
-        var label = dashboards.getFirst().periodReturns().get(index).label();
-        if (currentValue == null) {
-            return new PeriodReturn(label, null, null, null, null, null, null, false);
-        }
-        BigDecimal priceSum = BigDecimal.ZERO;
-        BigDecimal dividendSum = BigDecimal.ZERO;
-        BigDecimal basisSum = BigDecimal.ZERO;
-        for (var dashboard : dashboards) {
-            if (dashboard.portfolioValue() == null && dashboard.invested().compareTo(BigDecimal.ZERO) == 0) {
-                continue;
-            }
-            var period = dashboard.periodReturns().get(index);
-            if (!period.available() || period.priceAmount() == null || dashboard.portfolioValue() == null) {
-                return new PeriodReturn(label, null, null, null, null, null, null, false);
-            }
-            priceSum = priceSum.add(period.priceAmount());
-            dividendSum = dividendSum.add(period.dividendAmount());
-            basisSum = basisSum.add(dashboard.portfolioValue().subtract(period.priceAmount()));
-        }
-        BigDecimal total = priceSum.add(dividendSum);
-        BigDecimal pct = basisSum.compareTo(BigDecimal.ZERO) == 0
-                ? null
-                : total.multiply(BigDecimal.valueOf(100)).divide(basisSum, PCT_SCALE, RoundingMode.HALF_UP);
-        BigDecimal pricePct = basisSum.compareTo(BigDecimal.ZERO) == 0
-                ? null
-                : priceSum.multiply(BigDecimal.valueOf(100)).divide(basisSum, PCT_SCALE, RoundingMode.HALF_UP);
-        BigDecimal dividendPct = basisSum.compareTo(BigDecimal.ZERO) == 0
-                ? null
-                : dividendSum.multiply(BigDecimal.valueOf(100)).divide(basisSum, PCT_SCALE, RoundingMode.HALF_UP);
-        return new PeriodReturn(
-                label,
-                total.setScale(MONEY_SCALE, RoundingMode.HALF_UP),
-                pct,
-                priceSum.setScale(MONEY_SCALE, RoundingMode.HALF_UP),
-                pricePct,
-                dividendSum.setScale(MONEY_SCALE, RoundingMode.HALF_UP),
-                dividendPct,
-                true
-        );
     }
 
     private List<AllocationSlice> aggregateAllocation(List<DashboardResponse> dashboards) {
@@ -376,10 +290,37 @@ public class DashboardService {
         );
     }
 
-    private List<PeriodReturn> buildPeriodReturns(Long portfolioId, BigDecimal currentValue, LocalDate today) {
+    private List<PeriodReturn> buildPeriodReturns(PerformanceWindow window, LocalDate today) {
+        var securityIds = window.securityIds();
         return periodSpecs(today).stream()
-                .map(spec -> periodReturn(portfolioId, currentValue, today, spec.label(), spec.target()))
+                .map(spec -> toPeriodReturn(spec.label(), window.compute(securityIds, spec.target(), today)))
                 .toList();
+    }
+
+    /** Today's figure is the price leg of the one-day window, so an intraday buy is not read as a gain. */
+    private ReturnFigure todaysReturn(PerformanceWindow window, LocalDate today) {
+        var target = today.minusDays(1);
+        var result = window.compute(window.securityIds(), target, today);
+        if (!result.available()) {
+            return ReturnFigure.unavailable();
+        }
+        return new ReturnFigure(result.priceAmount(), result.pricePct(), target, true);
+    }
+
+    private static PeriodReturn toPeriodReturn(String label, PerformanceWindow.Result result) {
+        if (!result.available()) {
+            return new PeriodReturn(label, null, null, null, null, null, null, false);
+        }
+        return new PeriodReturn(
+                label,
+                result.totalAmount(),
+                result.totalPct(),
+                result.priceAmount(),
+                result.pricePct(),
+                result.dividendAmount(),
+                result.dividendPct(),
+                true
+        );
     }
 
     /**
@@ -388,7 +329,7 @@ public class DashboardService {
      * a personal tracker, switch to a single bulk query if holding/period counts grow.
      */
     private List<HoldingReturnBreakdown> buildHoldingBreakdowns(
-            Long portfolioId,
+            PerformanceWindow window,
             List<HoldingResponse> holdings,
             LocalDate today
     ) {
@@ -396,29 +337,22 @@ public class DashboardService {
             return List.of();
         }
         var specs = periodSpecs(today);
-        var valuesByPeriod = specs.stream()
-                .map(spec -> holdingService.holdingValuesAsOf(portfolioId, spec.target()))
-                .toList();
-        var dividendsBySecurity = dividendRepository.findByPortfolioIdOrderByPaymentDateDesc(portfolioId).stream()
-                .collect(Collectors.groupingBy(dividend -> dividend.getSecurity().getId()));
+        var dividendsBySecurity = window.dividendsBySecurity();
 
         var breakdowns = new ArrayList<HoldingReturnBreakdown>();
         for (var holding : holdings) {
             Long securityId = holding.securityId();
-            BigDecimal currentValue = holding.marketValue();
             BigDecimal basis = holding.totalAcb();
             var securityDividends = dividendsBySecurity.getOrDefault(securityId, List.of());
 
-            var priceReturn = holdingPriceReturn(currentValue, basis);
+            var priceReturn = holdingPriceReturn(holding.marketValue(), basis);
             var dividendReturn = holdingDividendReturn(sumNet(securityDividends, null, null), basis);
 
-            var periodReturns = new ArrayList<PeriodReturn>();
-            for (int i = 0; i < specs.size(); i++) {
-                var spec = specs.get(i);
-                var values = valuesByPeriod.get(i);
-                BigDecimal basisValue = values == null ? null : values.get(securityId);
-                periodReturns.add(holdingPeriodReturn(spec.label(), currentValue, basisValue, spec.target(), today, securityDividends));
-            }
+            var periodReturns = specs.stream()
+                    .map(spec -> toPeriodReturn(
+                            spec.label(),
+                            window.compute(List.of(securityId), spec.target(), today)))
+                    .toList();
             breakdowns.add(new HoldingReturnBreakdown(
                     securityId, holding.ticker(), holding.name(), priceReturn, dividendReturn, periodReturns));
         }
@@ -440,27 +374,6 @@ public class DashboardService {
         BigDecimal amount = netDividends.setScale(MONEY_SCALE, RoundingMode.HALF_UP);
         BigDecimal pct = basis.compareTo(BigDecimal.ZERO) != 0 ? pctOf(amount, basis) : null;
         return new ReturnFigure(amount, pct, null, true);
-    }
-
-    private PeriodReturn holdingPeriodReturn(
-            String label,
-            BigDecimal currentValue,
-            BigDecimal basisValue,
-            LocalDate target,
-            LocalDate today,
-            List<Dividend> securityDividends
-    ) {
-        if (currentValue == null || basisValue == null) {
-            return new PeriodReturn(label, null, null, null, null, null, null, false);
-        }
-        BigDecimal priceAmount = currentValue.subtract(basisValue).setScale(MONEY_SCALE, RoundingMode.HALF_UP);
-        BigDecimal dividendAmount = sumNet(securityDividends, target, today).setScale(MONEY_SCALE, RoundingMode.HALF_UP);
-        BigDecimal total = priceAmount.add(dividendAmount).setScale(MONEY_SCALE, RoundingMode.HALF_UP);
-        boolean hasBasis = basisValue.compareTo(BigDecimal.ZERO) != 0;
-        BigDecimal pricePct = hasBasis ? pctOf(priceAmount, basisValue) : null;
-        BigDecimal dividendPct = hasBasis ? pctOf(dividendAmount, basisValue) : null;
-        BigDecimal pct = hasBasis ? pctOf(total, basisValue) : null;
-        return new PeriodReturn(label, total, pct, priceAmount, pricePct, dividendAmount, dividendPct, true);
     }
 
     /** Net dividends ({@code gross - withholding}) with payment date in {@code (after, through]}; null bounds mean unbounded. */
@@ -486,7 +399,11 @@ public class DashboardService {
      * that leg, so its aggregate percent is suppressed rather than approximated. Switch to carrying an
      * explicit basis if exact overall per-ETF percents on zero-return legs are needed.
      */
-    private List<HoldingReturnBreakdown> aggregateHoldingBreakdowns(List<DashboardResponse> dashboards) {
+    private List<HoldingReturnBreakdown> aggregateHoldingBreakdowns(
+            List<DashboardResponse> dashboards,
+            PerformanceWindow window,
+            LocalDate today
+    ) {
         var bySecurity = new LinkedHashMap<Long, List<HoldingReturnBreakdown>>();
         for (var dashboard : dashboards) {
             for (var breakdown : dashboard.holdingBreakdowns()) {
@@ -500,13 +417,12 @@ public class DashboardService {
             var priceReturn = aggregateReconstructed(group.stream().map(HoldingReturnBreakdown::priceReturn).toList());
             var dividendReturn = aggregateReconstructed(group.stream().map(HoldingReturnBreakdown::dividendReturn).toList());
 
-            var periods = new ArrayList<PeriodReturn>();
-            for (int index = 0; index < first.periodReturns().size(); index++) {
-                final int periodIndex = index;
-                var label = first.periodReturns().get(periodIndex).label();
-                var contributors = group.stream().map(breakdown -> breakdown.periodReturns().get(periodIndex)).toList();
-                periods.add(aggregateHoldingPeriod(label, contributors));
-            }
+            // Periods are chained across every portfolio holding this security at once, not summed per portfolio.
+            var periods = periodSpecs(today).stream()
+                    .map(spec -> toPeriodReturn(
+                            spec.label(),
+                            window.compute(List.of(first.securityId()), spec.target(), today)))
+                    .toList();
             result.add(new HoldingReturnBreakdown(
                     first.securityId(), first.ticker(), first.name(), priceReturn, dividendReturn, periods));
         }
@@ -539,43 +455,6 @@ public class DashboardService {
         return new ReturnFigure(amountSum.setScale(MONEY_SCALE, RoundingMode.HALF_UP), pct, null, true);
     }
 
-    private PeriodReturn aggregateHoldingPeriod(String label, List<PeriodReturn> contributors) {
-        BigDecimal priceSum = BigDecimal.ZERO;
-        BigDecimal dividendSum = BigDecimal.ZERO;
-        BigDecimal basisSum = BigDecimal.ZERO;
-        boolean basisKnown = true;
-        boolean any = false;
-        for (var period : contributors) {
-            if (period == null || !period.available() || period.priceAmount() == null) {
-                continue;
-            }
-            any = true;
-            priceSum = priceSum.add(period.priceAmount());
-            dividendSum = dividendSum.add(period.dividendAmount());
-            BigDecimal basis = reconstructPeriodBasis(period);
-            if (basis == null) {
-                basisKnown = false;
-            } else {
-                basisSum = basisSum.add(basis);
-            }
-        }
-        if (!any) {
-            return new PeriodReturn(label, null, null, null, null, null, null, false);
-        }
-        BigDecimal total = priceSum.add(dividendSum);
-        boolean hasBasis = basisKnown && basisSum.compareTo(BigDecimal.ZERO) != 0;
-        return new PeriodReturn(
-                label,
-                total.setScale(MONEY_SCALE, RoundingMode.HALF_UP),
-                hasBasis ? pctOf(total, basisSum) : null,
-                priceSum.setScale(MONEY_SCALE, RoundingMode.HALF_UP),
-                hasBasis ? pctOf(priceSum, basisSum) : null,
-                dividendSum.setScale(MONEY_SCALE, RoundingMode.HALF_UP),
-                hasBasis ? pctOf(dividendSum, basisSum) : null,
-                true
-        );
-    }
-
     /** Recovers the cost basis behind a figure via {@code amount * 100 / pct}; null when it cannot be recovered. */
     private static BigDecimal reconstructBasis(BigDecimal amount, BigDecimal pct) {
         if (amount.compareTo(BigDecimal.ZERO) == 0) {
@@ -587,65 +466,8 @@ public class DashboardService {
         return amount.multiply(BigDecimal.valueOf(100)).divide(pct, MONEY_SCALE, RoundingMode.HALF_UP);
     }
 
-    /** Period basis is shared by its price and dividend legs; recover it from whichever leg has a usable percent. */
-    private static BigDecimal reconstructPeriodBasis(PeriodReturn period) {
-        BigDecimal fromPrice = reconstructBasis(period.priceAmount(), period.pricePct());
-        if (fromPrice == null || fromPrice.compareTo(BigDecimal.ZERO) != 0) {
-            return fromPrice;
-        }
-        BigDecimal fromDividend = reconstructBasis(period.dividendAmount(), period.dividendPct());
-        return fromDividend != null ? fromDividend : fromPrice;
-    }
-
     private BigDecimal pctOf(BigDecimal amount, BigDecimal basis) {
         return amount.multiply(BigDecimal.valueOf(100)).divide(basis, PCT_SCALE, RoundingMode.HALF_UP);
     }
 
-    /**
-     * Splits a period return into price (current value minus the basis snapshot) and dividends
-     * (net dividends paid after that snapshot date through today). Total = price + dividends,
-     * with the percent taken against the snapshot value.
-     */
-    private PeriodReturn periodReturn(
-            Long portfolioId,
-            BigDecimal currentValue,
-            LocalDate today,
-            String label,
-            LocalDate target
-    ) {
-        var price = computeReturn(portfolioId, currentValue, target);
-        if (!price.available()) {
-            return new PeriodReturn(label, null, null, null, null, null, null, false);
-        }
-        BigDecimal priceAmount = price.amount();
-        BigDecimal pricePct = price.pct();
-        BigDecimal snapshotValue = currentValue.subtract(priceAmount);
-        BigDecimal dividendAmount = dividendRepository
-                .sumNetByPortfolioBetween(portfolioId, price.basisDate(), today)
-                .setScale(MONEY_SCALE, RoundingMode.HALF_UP);
-        BigDecimal total = priceAmount.add(dividendAmount).setScale(MONEY_SCALE, RoundingMode.HALF_UP);
-        BigDecimal pct = snapshotValue.compareTo(BigDecimal.ZERO) != 0
-                ? total.multiply(BigDecimal.valueOf(100)).divide(snapshotValue, PCT_SCALE, RoundingMode.HALF_UP)
-                : null;
-        BigDecimal dividendPct = snapshotValue.compareTo(BigDecimal.ZERO) != 0
-                ? dividendAmount.multiply(BigDecimal.valueOf(100)).divide(snapshotValue, PCT_SCALE, RoundingMode.HALF_UP)
-                : null;
-        return new PeriodReturn(label, total, pct, priceAmount, pricePct, dividendAmount, dividendPct, true);
-    }
-
-    /** Current value minus the live-computed portfolio value as of {@code target}. */
-    private ReturnFigure computeReturn(Long portfolioId, BigDecimal currentValue, LocalDate target) {
-        if (currentValue == null) {
-            return ReturnFigure.unavailable();
-        }
-        BigDecimal basisValue = holdingService.portfolioValueAsOf(portfolioId, target);
-        if (basisValue == null) {
-            return ReturnFigure.unavailable();
-        }
-        BigDecimal amount = currentValue.subtract(basisValue).setScale(MONEY_SCALE, RoundingMode.HALF_UP);
-        BigDecimal pct = basisValue.compareTo(BigDecimal.ZERO) != 0
-                ? amount.multiply(BigDecimal.valueOf(100)).divide(basisValue, PCT_SCALE, RoundingMode.HALF_UP)
-                : null;
-        return new ReturnFigure(amount, pct, target, true);
-    }
 }
