@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,14 +70,15 @@ public class AccountService {
             return Map.of();
         }
         var ids = accounts.stream().map(Account::getId).toList();
+        var today = LocalDate.now();
         var netByAccount = new java.util.HashMap<Long, BigDecimal>();
-        for (var row : cashTransactionRepository.sumAmountByAccountIds(ids)) {
+        for (var row : cashTransactionRepository.sumAmountByAccountIds(ids, today)) {
             netByAccount.put((Long) row[0], (BigDecimal) row[1]);
         }
-        for (var trade : securityTransactionRepository.findCashImpactingByAccountIds(ids)) {
+        for (var trade : securityTransactionRepository.findCashImpactingByAccountIds(ids, today)) {
             netByAccount.merge(trade.getAccount().getId(), trade.cashImpact(), BigDecimal::add);
         }
-        for (var dividend : dividendRepository.findCashImpactingByAccountIds(ids)) {
+        for (var dividend : dividendRepository.findCashImpactingByAccountIds(ids, today)) {
             netByAccount.merge(dividend.getAccount().getId(), dividend.cashImpact(), BigDecimal::add);
         }
         var balances = new LinkedHashMap<Long, BigDecimal>();

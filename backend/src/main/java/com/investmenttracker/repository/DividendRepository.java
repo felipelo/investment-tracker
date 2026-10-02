@@ -40,8 +40,12 @@ public interface DividendRepository extends JpaRepository<Dividend, Long> {
             JOIN FETCH d.account a
             WHERE a.id IN :accountIds
               AND d.drip = false
+              AND d.paymentDate <= :asOf
             """)
-    List<Dividend> findCashImpactingByAccountIds(@Param("accountIds") Collection<Long> accountIds);
+    List<Dividend> findCashImpactingByAccountIds(
+            @Param("accountIds") Collection<Long> accountIds,
+            @Param("asOf") java.time.LocalDate asOf
+    );
 
     @Query("""
             SELECT d FROM Dividend d

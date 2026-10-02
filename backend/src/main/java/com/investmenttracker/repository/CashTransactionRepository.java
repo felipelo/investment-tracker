@@ -38,9 +38,13 @@ public interface CashTransactionRepository extends JpaRepository<CashTransaction
     @Query("""
             SELECT c.account.id, SUM(c.amount) FROM CashTransaction c
             WHERE c.account.id IN :ids
+              AND c.date <= :asOf
             GROUP BY c.account.id
             """)
-    List<Object[]> sumAmountByAccountIds(@Param("ids") Collection<Long> ids);
+    List<Object[]> sumAmountByAccountIds(
+            @Param("ids") Collection<Long> ids,
+            @Param("asOf") LocalDate asOf
+    );
 
     List<CashTransaction> findByTransferGroupId(String transferGroupId);
 

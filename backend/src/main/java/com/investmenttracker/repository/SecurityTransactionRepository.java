@@ -51,10 +51,14 @@ public interface SecurityTransactionRepository extends JpaRepository<SecurityTra
             JOIN FETCH t.security
             JOIN FETCH t.account a
             WHERE a.id IN :accountIds
+              AND t.date <= :asOf
               AND t.action IN (com.investmenttracker.domain.Action.BUY,
                                com.investmenttracker.domain.Action.SELL)
             """)
-    List<SecurityTransaction> findCashImpactingByAccountIds(@Param("accountIds") Collection<Long> accountIds);
+    List<SecurityTransaction> findCashImpactingByAccountIds(
+            @Param("accountIds") Collection<Long> accountIds,
+            @Param("asOf") LocalDate asOf
+    );
 
     @Query("""
             SELECT t FROM SecurityTransaction t

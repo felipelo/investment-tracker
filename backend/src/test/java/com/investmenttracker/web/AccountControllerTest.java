@@ -3,10 +3,12 @@ package com.investmenttracker.web;
 import tools.jackson.databind.ObjectMapper;
 import com.investmenttracker.domain.Account;
 import com.investmenttracker.domain.Action;
+import com.investmenttracker.domain.Dividend;
 import com.investmenttracker.domain.Portfolio;
 import com.investmenttracker.domain.Security;
 import com.investmenttracker.domain.SecurityTransaction;
 import com.investmenttracker.repository.AccountRepository;
+import com.investmenttracker.repository.DividendRepository;
 import com.investmenttracker.repository.PortfolioRepository;
 import com.investmenttracker.repository.SecurityRepository;
 import com.investmenttracker.repository.SecurityTransactionRepository;
@@ -55,6 +57,9 @@ class AccountControllerTest {
 
     @Autowired
     private SecurityTransactionRepository securityTransactionRepository;
+
+    @Autowired
+    private DividendRepository dividendRepository;
 
     @Test
     void createPersistsAccountWithDefaults() throws Exception {
@@ -214,6 +219,33 @@ class AccountControllerTest {
     }
 
     @Test
+    void currentBalanceIgnoresFutureDividends() throws Exception {
+        var portfolio = defaultPortfolio();
+        var account = createAccount(portfolio, "Dividend Cash Account", "Chequing");
+        var security = securityRepository.findAllByOrderByTickerAsc().getFirst();
+        var today = LocalDate.now();
+        saveDividend(portfolio, security, account, today, "100.00");
+        saveDividend(portfolio, security, account, today.plusDays(30), "50.00");
+
+        mockMvc.perform(get("/api/v1/accounts").param("portfolioId", portfolio.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == " + account.getId() + ")].currentBalance", hasItem(100.0)));
+    }
+
+    @Test
+    void currentBalanceIgnoresFutureCashTransactions() throws Exception {
+        var portfolio = defaultPortfolio();
+        var account = createAccount(portfolio, "Future Cash Account", "Chequing");
+        var today = LocalDate.now();
+        postCash(cashBody(account.getId(), "DEPOSIT", today.toString(), "1000.00"));
+        postCash(cashBody(account.getId(), "DEPOSIT", today.plusDays(30).toString(), "500.00"));
+
+        mockMvc.perform(get("/api/v1/accounts").param("portfolioId", portfolio.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == " + account.getId() + ")].currentBalance", hasItem(1000.0)));
+    }
+
+    @Test
     void currentBalanceReflectsTradeCash() throws Exception {
         var portfolio = defaultPortfolio();
         var account = createAccount(portfolio, "Trade Cash Account", "Chequing");
@@ -300,6 +332,25 @@ class AccountControllerTest {
         var body = cashBody(accountId, type, date, amount);
         body.put("counterpartyAccountId", counterpartyAccountId);
         return body;
+    }
+
+    private void saveDividend(
+            Portfolio portfolio,
+            Security security,
+            Account account,
+            LocalDate paymentDate,
+            String gross
+    ) {
+        var dividend = new Dividend();
+        dividend.setPortfolio(portfolio);
+        dividend.setSecurity(security);
+        dividend.setAccount(account);
+        dividend.setPaymentDate(paymentDate);
+        dividend.setGrossAmount(new BigDecimal(gross));
+        dividend.setWithholdingTax(BigDecimal.ZERO);
+        dividend.setCurrency("CAD");
+        dividend.setDrip(false);
+        dividendRepository.save(dividend);
     }
 
     private void saveBuy(Security security, Account account) {
